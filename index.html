@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>8-Pipe Water Flow Dashboard</title>
+  <style>
+    :root {
+      --bg:#07111f; --panel:#10233a; --text:#eef8ff; --muted:#8ea7ba;
+      --blue:#35b9ff; --green:#35d07f; --red:#ff5d73; --border:rgba(255,255,255,.08);
+    }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body {
+      margin:0; min-height:100vh; color:var(--text);
+      font-family:Inter,system-ui,sans-serif;
+      background:linear-gradient(145deg,#06101b,#0a1a2b);
+    }
+    .page { width:min(1500px,calc(100% - 18px)); margin:auto; padding:10px 0 14px; }
+    .top { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:8px; }
+    h1 { margin:0; font-size:clamp(1.4rem,2.5vw,2rem); }
+    .sub { color:var(--muted); margin-top:5px; font-size:.9rem; }
+    .top-actions { display:flex; align-items:center; gap:10px; }
+    .wipe-btn { min-width:118px; white-space:nowrap; }
+    .wipe-btn.wiping { background:#e6a93b; color:#07111f; }
+    .wipe-btn.done { background:var(--green); color:#07111f; }
+    .status { padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:12px; }
+    .dot { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--red); margin-right:7px; }
+    .dot.online { background:var(--green); }
+    .error { display:none; padding:12px; margin-bottom:14px; border:1px solid rgba(255,93,115,.3); background:rgba(255,93,115,.12); border-radius:12px; }
+    .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+    .card { background:linear-gradient(145deg,#10233a,#0e1e32); border:1px solid var(--border); border-radius:14px; padding:7px 12px; }
+    .head { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .badge { padding:4px 7px; border-radius:999px; font-size:.66rem; font-weight:800; color:#ffdbe0; background:rgba(255,93,115,.12); }
+    .badge.flowing { color:#caffdf; background:rgba(53,208,127,.12); }
+    .pipe { height:30px; display:grid; place-items:center; position:relative; }
+    .tube { width:84%; height:20px; border-radius:999px; overflow:hidden; border:2px solid rgba(255,255,255,.15); background:#071424; }
+    .water { height:100%; opacity:0; background:repeating-linear-gradient(90deg,#159edf 0 18px,#6cd8ff 18px 36px); background-size:72px 100%; }
+    .water.flowing { opacity:1; animation:move .8s linear infinite; }
+    .cross { position:absolute; color:var(--red); font-size:20px; }
+    .cross.hidden { display:none; }
+    @keyframes move { to { background-position-x:72px; } }
+    .reading { text-align:center; font-size:1.30rem; font-weight:900; line-height:1.1; }
+    .unit { color:var(--muted); font-size:.72rem; }
+    .metrics { display:flex; justify-content:space-between; border-top:1px solid var(--border); margin-top:4px; padding-top:4px; font-size:.75rem; }
+    .label { color:var(--muted); font-size:.68rem; }
+    .filter { margin-top:7px; display:grid; grid-template-columns:1fr 1.2fr auto; gap:8px; }
+    select,input,button { min-height:34px; border-radius:9px; border:1px solid var(--border); padding:0 10px; color:var(--text); background:#10233a; }
+    button { cursor:pointer; font-weight:800; background:linear-gradient(135deg,#45c5ff,#239fe5); color:#03121c; }
+    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:8px; }
+    .stat { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:8px 12px; }
+    .stat strong { display:block; margin-top:2px; font-size:1.15rem; }
+    .chart { margin-top:8px; background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:8px 12px 14px; min-height:255px; }
+    canvas { width:100%!important; height:205px!important; }
+    @media(max-width:1000px){.grid,.stats{grid-template-columns:repeat(2,1fr)}.filter{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:600px){.top{align-items:flex-start;flex-direction:column}.top-actions{width:100%;flex-wrap:wrap}.grid,.stats,.filter{grid-template-columns:1fr}.status{flex:1}.wipe-btn{flex:1}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="top">
+      <div>
+        <h1>8-Pipe Water Flow Dashboard</h1>
+        
+      </div>
+      <div class="top-actions">
+        <button id="wipeLogs" class="wipe-btn" type="button">Wipe Logs</button>
+        <div class="status">
+          <span id="dot" class="dot"></span>
+          <strong id="connection">Connecting...</strong>
+          <div id="updated" class="sub">Waiting for data</div>
+        </div>
+      </div>
+    </header>
+
+    <div id="error" class="error"></div>
+
+    <section class="grid">
+      <article class="card" data-pipe="1"></article>
+      <article class="card" data-pipe="2"></article>
+      <article class="card" data-pipe="3"></article>
+      <article class="card" data-pipe="4"></article>
+      <article class="card" data-pipe="5"></article>
+      <article class="card" data-pipe="6"></article>
+      <article class="card" data-pipe="7"></article>
+      <article class="card" data-pipe="8"></article>
+    </section>
+
+    <section class="card" style="margin-top:8px">
+      <h3 style="margin-top:0">Analysis Filter</h3>
+      <div class="sub">Select a pipe and date, then click Apply.</div>
+      <div class="filter">
+        <select id="pipeFilter">
+          <option value="all">All Pipes</option>
+          <option value="1">Pipe 1</option>
+          <option value="2">Pipe 2</option>
+          <option value="3">Pipe 3</option>
+          <option value="4">Pipe 4</option>
+          <option value="5">Pipe 5</option>
+          <option value="6">Pipe 6</option>
+          <option value="7">Pipe 7</option>
+          <option value="8">Pipe 8</option>
+        </select>
+        <input id="dateFilter" type="date" />
+        <button id="apply">Apply</button>
+      </div>
+    </section>
+
+    <section id="analysisResults" class="stats">
+      <div class="stat"><span class="label">Total Usage</span><strong id="usage">0.000 L</strong></div>
+      <div class="stat"><span class="label">Average flow</span><strong id="average">0.00 L/min</strong></div>
+      <div class="stat"><span class="label">Peak flow</span><strong id="peak">0.00 L/min</strong></div>
+      <div class="stat"><span class="label">Active duration</span><strong id="duration">0 min</strong></div>
+    </section>
+
+    <section class="chart">
+      <h3 style="margin-top:0">Monthly Water Usage</h3>
+      
+      <canvas id="flowChart"></canvas>
+    </section>
+
+    <section class="card" style="margin-top:8px">
+      <div class="head">
+        <div>
+          <h3 style="margin:0">Total Month Usage</h3>
+          <div class="sub">Total litres recorded for the selected month and selected pipe(s).</div>
+        </div>
+        <strong id="monthUsageValue" style="font-size:1.55rem">0.000 L</strong>
+      </div>
+
+      <div style="margin-top:8px;height:12px;border-radius:999px;background:#071424;border:1px solid var(--border);overflow:hidden">
+        <div id="monthUsageBar"
+             style="height:100%;width:0%;background:linear-gradient(90deg,#159edf,#6cd8ff);transition:width .35s ease"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const BASE = "https://water-flow-rate-9ce4f-default-rtdb.firebaseio.com";
+    const LIVE = `${BASE}/waterFlow/live.json`;
+    const HISTORY = `${BASE}/waterFlow/history.json`;
+    const RESET_TOKEN = `${BASE}/waterFlow/control/resetToken.json`;
+    const RESET_ACK = `${BASE}/waterFlow/control/resetAck.json`;
+    const FLOW_THRESHOLD = 0.20;
+    const ESP_STALE_MS = 10000; // If no fresh ESP update for 10 s, treat ESP as offline
+
+    let history = [];
+    let latestLive = null;
+
+    document.querySelectorAll("[data-pipe]").forEach(card => {
+      const p = card.dataset.pipe;
+      card.innerHTML = `
+        <div class="head">
+          <strong>Pipe ${p}</strong>
+          <span id="badge${p}" class="badge">No Flow</span>
+        </div>
+        <div class="pipe">
+          <div class="tube"><div id="water${p}" class="water"></div></div>
+          <div id="cross${p}" class="cross">✕</div>
+        </div>
+        <div class="reading"><span id="flow${p}">0.00</span> <span class="unit">L/min</span></div>
+        <div class="metrics">
+          <div><div class="label">Total</div><strong id="total${p}">0.000 L</strong></div>
+          <div style="text-align:right"><div class="label">Per hour</div><strong id="hour${p}">0.00 L</strong></div>
+        </div>`;
+    });
+
+    const chart = new Chart(document.getElementById("flowChart"), {
+      type:"bar",
+      data:{labels:[],datasets:[]},
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        animation:false,
+        layout:{padding:{bottom:14}},
+        interaction:{mode:"nearest",intersect:true},
+        plugins:{
+          legend:{labels:{color:"#d3e2ee"}},
+          tooltip:{
+            mode:"nearest",
+            intersect:true,
+            callbacks:{
+              title:()=>selectedDateLabel(),
+              label:(ctx)=>
+                `${ctx.dataset.label}: ${Number(ctx.raw||0).toFixed(2)} L`
+            }
+          }
+        },
+        scales:{
+          x:{
+            title:{display:true,text:"Date",color:"#8ea7ba",padding:{top:10,bottom:0}},
+            ticks:{
+              color:"#8ea7ba",
+              maxRotation:0,
+              minRotation:0,
+              autoSkip:false,
+              padding:10
+            },
+            grid:{color:"rgba(255,255,255,.04)"}
+          },
+          y:{
+            beginAtZero:true,
+            min:0,
+            max:100,
+            title:{display:true,text:"Water Used (Litres)",color:"#8ea7ba"},
+            ticks:{
+              stepSize:100,
+              color:"#8ea7ba",
+              callback:value=>`${value} L`
+            },
+            grid:{color:"rgba(255,255,255,.05)"}
+          }
+        }
+      }
+    });
+
+    const n = v => Number.isFinite(Number(v)) ? Number(v) : 0;
+
+    function selectedDateLabel(){
+      const value = document.getElementById("dateFilter").value;
+      if (!value) return "";
+      const d = new Date(`${value}T00:00:00`);
+      return d.toLocaleDateString("en-GB", {
+        day:"numeric",
+        month:"short",
+        year:"numeric"
+      });
+    }
+
+    const valueLabelPlugin = {
+      id:"valueLabelPlugin",
+      afterDatasetsDraw(chart) {
+        const {ctx} = chart;
+        ctx.save();
+        ctx.fillStyle = "#eef8ff";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        ctx.font = "600 12px Inter, system-ui, sans-serif";
+
+        chart.data.datasets.forEach((dataset,datasetIndex) => {
+          const meta = chart.getDatasetMeta(datasetIndex);
+
+          meta.data.forEach((bar,index) => {
+            const value = n(dataset.data[index]);
+            if (value <= 0) return;
+
+            ctx.fillText(
+              `${value.toFixed(2)} L`,
+              bar.x,
+              bar.y - 6
+            );
+          });
+        });
+
+        ctx.restore();
+      }
+    };
+
+    Chart.register(valueLabelPlugin);
+
+
+    function updatePipe(i, pipe) {
+      const flow = n(pipe?.currentFlowLpm ?? pipe?.flowRate);
+      const total = n(pipe?.totalLitres);
+      const flowing = pipe?.flowing === true || flow >= FLOW_THRESHOLD;
+
+      document.getElementById(`flow${i}`).textContent = flow.toFixed(2);
+      document.getElementById(`total${i}`).textContent = `${total.toFixed(3)} L`;
+      document.getElementById(`hour${i}`).textContent = `${(flow*60).toFixed(2)} L`;
+
+      document.getElementById(`badge${i}`).textContent = flowing ? "Water Flowing" : "No Flow";
+      document.getElementById(`badge${i}`).classList.toggle("flowing", flowing);
+      document.getElementById(`water${i}`).classList.toggle("flowing", flowing);
+      document.getElementById(`cross${i}`).classList.toggle("hidden", flowing);
+    }
+
+    async function fetchLive() {
+      try {
+        const r = await fetch(`${LIVE}?t=${Date.now()}`, {cache:"no-store"});
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+
+        const data = await r.json();
+        if (!data) throw new Error("No live data");
+
+        latestLive = data;
+
+        // IMPORTANT:
+        // Firebase keeps the last written values even after ESP32 power is removed.
+        // Therefore "data exists" does NOT mean the ESP32 is currently online.
+        // We use the ESP32's own Firebase timestamp to detect stale data.
+        const espTimestamp = n(data.timestamp);
+        const ageMs = espTimestamp > 0 ? (Date.now() - espTimestamp) : Infinity;
+        const espFresh = ageMs >= 0 && ageMs <= ESP_STALE_MS;
+
+        if (espFresh) {
+          // Fresh ESP data: show the real live flow and totals.
+          for (let i=1;i<=8;i++) {
+            updatePipe(i, data[`pipe${i}`] || {});
+          }
+
+          document.getElementById("dot").classList.add("online");
+          document.getElementById("connection").textContent = "Live";
+        } else {
+          // ESP is disconnected/stale:
+          // Keep the last cumulative total litres,
+          // but force live flow, per-hour and "Water Flowing" to zero/off.
+          for (let i=1;i<=8;i++) {
+            const pipe = data[`pipe${i}`] || {};
+            updatePipe(i, {
+              ...pipe,
+              currentFlowLpm:0,
+              flowRate:0,
+              flowing:false
+            });
+          }
+
+          document.getElementById("dot").classList.remove("online");
+          document.getElementById("connection").textContent = "ESP Offline";
+        }
+
+        // Show the ACTUAL ESP32 update time, not the browser polling time.
+        document.getElementById("updated").textContent =
+          espTimestamp > 0
+            ? `ESP Updated: ${new Date(espTimestamp).toLocaleString()}`
+            : "ESP update time unavailable";
+
+        document.getElementById("error").style.display = "none";
+
+        // Keep analysis/graph synchronized with stored history.
+        if (history.length) {
+          apply();
+        }
+
+      } catch (e) {
+        document.getElementById("connection").textContent = "Disconnected";
+        document.getElementById("dot").classList.remove("online");
+
+        // If Firebase itself cannot be reached, also force only live-flow display to zero.
+        if (latestLive) {
+          for (let i=1;i<=8;i++) {
+            const pipe = latestLive[`pipe${i}`] || {};
+            updatePipe(i, {
+              ...pipe,
+              currentFlowLpm:0,
+              flowRate:0,
+              flowing:false
+            });
+          }
+        }
+
+        const box = document.getElementById("error");
+        box.textContent = `${e.message}. Check internet/Firebase connection.`;
+        box.style.display = "block";
+      }
+    }
+
+    async function wipeLogs() {
+      const button = document.getElementById("wipeLogs");
+      const errorBox = document.getElementById("error");
+
+      if (button.disabled) return;
+
+      button.disabled = true;
+      button.classList.remove("done");
+      button.classList.add("wiping");
+      button.textContent = "Logs Wiping...";
+      errorBox.style.display = "none";
+
+      try {
+        const token = Date.now();
+
+        // Always send/queue the reset command in Firebase.
+        // The ESP32 will process it whenever it is online.
+        const commandResponse = await fetch(RESET_TOKEN, {
+          method:"PUT",
+          headers:{"Content-Type":"application/json"},
+          body:String(token)
+        });
+
+        if (!commandResponse.ok) {
+          throw new Error(
+            `Reset command failed: HTTP ${commandResponse.status}`
+          );
+        }
+
+        // If ESP is currently offline/stale, do NOT call this a failure.
+        // The reset token remains in Firebase and will be handled
+        // automatically when the ESP reconnects.
+        const liveResponse = await fetch(`${LIVE}?t=${Date.now()}`, {
+          cache:"no-store"
+        });
+
+        let espFresh = false;
+
+        if (liveResponse.ok) {
+          const live = await liveResponse.json();
+          const espTimestamp = n(live?.timestamp);
+          const ageMs = espTimestamp > 0 ? Date.now() - espTimestamp : Infinity;
+          espFresh = ageMs >= 0 && ageMs <= ESP_STALE_MS;
+        }
+
+        if (!espFresh) {
+          button.classList.remove("wiping");
+          button.classList.add("done");
+          button.textContent = "Reset Queued";
+
+          errorBox.textContent =
+            "ESP32 is offline. Reset command is queued in Firebase and will execute automatically when the ESP32 reconnects.";
+          errorBox.style.display = "block";
+
+          setTimeout(() => {
+            button.classList.remove("done");
+            button.textContent = "Wipe Logs";
+            button.disabled = false;
+          }, 2500);
+
+          return;
+        }
+
+        // ESP is online: wait for reset acknowledgement.
+        const timeoutMs = 18000;
+        const pollMs = 400;
+        const startedAt = Date.now();
+        let confirmed = false;
+        let confirmedLive = null;
+
+        while (Date.now() - startedAt < timeoutMs) {
+          await new Promise(resolve => setTimeout(resolve,pollMs));
+
+          const [ackResponse,latestLiveResponse] = await Promise.all([
+            fetch(`${RESET_ACK}?t=${Date.now()}`, {cache:"no-store"}),
+            fetch(`${LIVE}?t=${Date.now()}`, {cache:"no-store"})
+          ]);
+
+          if (!ackResponse.ok || !latestLiveResponse.ok) {
+            continue;
+          }
+
+          const ack = await ackResponse.json();
+          const live = await latestLiveResponse.json();
+
+          const ackMatches = Number(ack) === Number(token);
+
+          const allTotalsZero =
+            live &&
+            [1,2,3,4,5,6,7,8].every(i =>
+              Math.abs(n(live?.[`pipe${i}`]?.totalLitres)) < 0.0005
+            );
+
+          const allPulseTotalsZero =
+            live &&
+            [1,2,3,4,5,6,7,8].every(i =>
+              n(live?.[`pipe${i}`]?.totalPulseCount) === 0
+            );
+
+          if (ackMatches && allTotalsZero && allPulseTotalsZero) {
+            confirmed = true;
+            confirmedLive = live;
+            break;
+          }
+        }
+
+        if (!confirmed) {
+          // ESP may have gone offline while reset was in progress.
+          // The command is still queued in Firebase, so show queued rather than failed.
+          button.classList.remove("wiping");
+          button.classList.add("done");
+          button.textContent = "Reset Queued";
+
+          errorBox.textContent =
+            "Reset command is stored in Firebase. It will complete when the ESP32 is online and acknowledges it.";
+          errorBox.style.display = "block";
+
+          setTimeout(() => {
+            button.classList.remove("done");
+            button.textContent = "Wipe Logs";
+            button.disabled = false;
+          }, 2500);
+
+          return;
+        }
+
+        latestLive = confirmedLive;
+        history = [];
+
+        for (let i=1;i<=8;i++) {
+          updatePipe(i, confirmedLive?.[`pipe${i}`] || {
+            currentFlowLpm:0,
+            totalLitres:0,
+            totalPulseCount:0,
+            flowing:false
+          });
+        }
+
+        document.getElementById("usage").textContent = "0.000 L";
+        document.getElementById("average").textContent = "0.00 L/min";
+        document.getElementById("peak").textContent = "0.00 L/min";
+        document.getElementById("duration").textContent = "0 min";
+        document.getElementById("monthUsageValue").textContent = "0.000 L";
+        document.getElementById("monthUsageBar").style.width = "0%";
+
+        chart.data.datasets.forEach(ds => {
+          ds.data = ds.data.map(() => 0);
+        });
+        chart.options.scales.y.max = 10;
+        chart.options.scales.y.ticks.stepSize = 1;
+        chart.update();
+
+        await fetchHistory();
+        await fetchLive();
+
+        button.classList.remove("wiping");
+        button.classList.add("done");
+        button.textContent = "Wiping Completed";
+
+        setTimeout(() => {
+          button.classList.remove("done");
+          button.textContent = "Wipe Logs";
+          button.disabled = false;
+        }, 1800);
+
+      } catch(error) {
+        button.classList.remove("wiping","done");
+        button.textContent = "Wipe Failed";
+
+        errorBox.textContent = error.message;
+        errorBox.style.display = "block";
+
+        setTimeout(() => {
+          button.textContent = "Wipe Logs";
+          button.disabled = false;
+        }, 3000);
+      }
+    }
+
+    function normalize(raw) {
+      if (!raw) return [];
+
+      return Object.entries(raw).map(([key,v]) => ({
+        timestamp:n(v.timestamp),
+
+        // Support both the older and newer ESP field names.
+        p1f:n(v.pipe1FlowRate ?? v.pipe1CurrentFlowLpm),
+        p2f:n(v.pipe2FlowRate ?? v.pipe2CurrentFlowLpm),
+        p3f:n(v.pipe3FlowRate ?? v.pipe3CurrentFlowLpm),
+        p4f:n(v.pipe4FlowRate ?? v.pipe4CurrentFlowLpm),
+        p5f:n(v.pipe5FlowRate ?? v.pipe5CurrentFlowLpm),
+        p6f:n(v.pipe6FlowRate ?? v.pipe6CurrentFlowLpm),
+        p7f:n(v.pipe7FlowRate ?? v.pipe7CurrentFlowLpm),
+        p8f:n(v.pipe8FlowRate ?? v.pipe8CurrentFlowLpm),
+
+        p1t:n(v.pipe1TotalLitres),
+        p2t:n(v.pipe2TotalLitres),
+        p3t:n(v.pipe3TotalLitres),
+        p4t:n(v.pipe4TotalLitres),
+        p5t:n(v.pipe5TotalLitres),
+        p6t:n(v.pipe6TotalLitres),
+        p7t:n(v.pipe7TotalLitres),
+        p8t:n(v.pipe8TotalLitres),
+
+        p1i:n(v.pipe1IntervalLitres),
+        p2i:n(v.pipe2IntervalLitres),
+        p3i:n(v.pipe3IntervalLitres),
+        p4i:n(v.pipe4IntervalLitres),
+        p5i:n(v.pipe5IntervalLitres),
+        p6i:n(v.pipe6IntervalLitres),
+        p7i:n(v.pipe7IntervalLitres),
+        p8i:n(v.pipe8IntervalLitres),
+
+        h1i:Object.prototype.hasOwnProperty.call(v,"pipe1IntervalLitres"),
+        h2i:Object.prototype.hasOwnProperty.call(v,"pipe2IntervalLitres"),
+        h3i:Object.prototype.hasOwnProperty.call(v,"pipe3IntervalLitres"),
+        h4i:Object.prototype.hasOwnProperty.call(v,"pipe4IntervalLitres"),
+        h5i:Object.prototype.hasOwnProperty.call(v,"pipe5IntervalLitres"),
+        h6i:Object.prototype.hasOwnProperty.call(v,"pipe6IntervalLitres"),
+        h7i:Object.prototype.hasOwnProperty.call(v,"pipe7IntervalLitres"),
+        h8i:Object.prototype.hasOwnProperty.call(v,"pipe8IntervalLitres")
+      }))
+      .filter(x=>x.timestamp)
+      .sort((a,b)=>a.timestamp-b.timestamp);
+    }
+
+    async function fetchHistory() {
+      const r = await fetch(`${HISTORY}?t=${Date.now()}`, {cache:"no-store"});
+      if (r.ok) {
+        history = normalize(await r.json());
+        apply();
+      }
+    }
+
+    function range(dateValue) {
+      const d = new Date(`${dateValue}T00:00:00`);
+      const s = new Date(d);
+      s.setHours(0,0,0,0);
+
+      const e = new Date(s);
+      e.setDate(e.getDate()+1);
+
+      return [s.getTime(),e.getTime()];
+    }
+
+    function localDayKey(timestamp) {
+      const d = new Date(timestamp);
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      const day = String(d.getDate()).padStart(2,"0");
+      return `${y}-${m}-${day}`;
+    }
+
+    function shortDateLabel(dayKey) {
+      const d = new Date(`${dayKey}T00:00:00`);
+      return d.toLocaleDateString("en-GB", {
+        day:"numeric",
+        month:"short"
+      });
+    }
+
+    function usageFromRows(rows, pipeNo) {
+      if (!rows.length) return 0;
+
+      // Best method: sum ESP32-recorded interval litres.
+      // This prevents the graph from losing the first litres of a period.
+      const intervalField = `p${pipeNo}i`;
+      const hasIntervalField = `h${pipeNo}i`;
+
+      if (rows.some(row => row[hasIntervalField])) {
+        return rows.reduce(
+          (sum,row) => sum + Math.max(0,n(row[intervalField])),
+          0
+        );
+      }
+
+      // Backward-compatible fallback for older Firebase history.
+      // Add all positive cumulative-total changes.
+      const totalField = `p${pipeNo}t`;
+      let usage = Math.max(0,n(rows[0][totalField]));
+
+      for (let i=1;i<rows.length;i++) {
+        const delta =
+          n(rows[i][totalField]) -
+          n(rows[i-1][totalField]);
+
+        if (delta >= 0) {
+          usage += delta;
+        } else {
+          // Counter was reset; the new post-reset total is new usage.
+          usage += Math.max(0,n(rows[i][totalField]));
+        }
+      }
+
+      return usage;
+    }
+
+    function buildBucketUsage(
+      allRows,
+      pipeNos,
+      year,
+      month,
+      startDay,
+      endDay,
+      bucketIndex
+    ) {
+      const bucketRows = allRows.filter(row => {
+        const d = new Date(row.timestamp);
+
+        if (
+          d.getFullYear() !== year ||
+          d.getMonth() !== month
+        ) {
+          return false;
+        }
+
+        const day = d.getDate();
+
+        // Prevent boundary dates from being counted twice.
+        return bucketIndex === 0
+          ? day >= startDay && day <= endDay
+          : day > startDay && day <= endDay;
+      });
+
+      const result = {};
+
+      pipeNos.forEach(no => {
+        result[`p${no}`] =
+          usageFromRows(bucketRows,no);
+      });
+
+      return result;
+    }
+
+    function apply() {
+      const p = document.getElementById("pipeFilter").value;
+      const date = document.getElementById("dateFilter").value;
+      const [start,end] = range(date);
+      const rows = history.filter(x=>x.timestamp>=start&&x.timestamp<end);
+
+      const pipeNos = p==="all" ? [1,2,3,4,5,6,7,8] : [Number(p)];
+      const flowAt = (row,no) => row[`p${no}f`];
+      const totalAt = (row,no) => row[`p${no}t`];
+
+      let usage=0;
+      pipeNos.forEach(no=>{
+        usage += usageFromRows(rows,no);
+      });
+
+      const flows = rows.map(row=>pipeNos.reduce((s,no)=>s+flowAt(row,no),0));
+      const avg = flows.length ? flows.reduce((a,b)=>a+b,0)/flows.length : 0;
+      const peak = flows.length ? Math.max(...flows) : 0;
+      let mins=0;
+      for(let i=1;i<rows.length;i++){
+        if(flows[i]>=FLOW_THRESHOLD) mins += (rows[i].timestamp-rows[i-1].timestamp)/60000;
+      }
+
+      document.getElementById("usage").textContent = `${usage.toFixed(3)} L`;
+      document.getElementById("average").textContent = `${avg.toFixed(2)} L/min`;
+      document.getElementById("peak").textContent = `${peak.toFixed(2)} L/min`;
+      document.getElementById("duration").textContent = `${Math.round(mins)} min`;
+
+      // Monthly graph: each bar is the total litres recorded
+      // inside that 5-day period.
+      const selectedDateObj = new Date(`${date}T00:00:00`);
+      const year = selectedDateObj.getFullYear();
+      const month = selectedDateObj.getMonth();
+      const monthShort =
+        selectedDateObj.toLocaleDateString(
+          "en-GB",
+          {month:"short"}
+        );
+
+      const lastDay =
+        new Date(
+          year,
+          month + 1,
+          0
+        ).getDate();
+
+      const ranges = [
+        [1,5],
+        [5,10],
+        [10,15],
+        [15,20],
+        [20,25],
+        [25,lastDay]
+      ];
+
+      const bucketData =
+        ranges.map(
+          ([startDay,endDay],idx) =>
+            buildBucketUsage(
+              history,
+              pipeNos,
+              year,
+              month,
+              startDay,
+              endDay,
+              idx
+            )
+        );
+
+      const colors=[
+        "#35b9ff",
+        "#35d07f",
+        "#ffbd59",
+        "#a98cff",
+        "#ff7f50",
+        "#00c2a8",
+        "#f06292",
+        "#9ccc65"
+      ];
+
+      chart.data.labels =
+        ranges.map(
+          ([startDay,endDay]) =>
+            `${startDay}-${endDay} ${monthShort}`
+        );
+
+      chart.data.datasets =
+        pipeNos.map(no => ({
+          label:`Pipe ${no}`,
+          data:bucketData.map(
+            bucket => n(bucket[`p${no}`])
+          ),
+          borderColor:colors[no-1],
+          backgroundColor:colors[no-1]+"66",
+          borderWidth:2,
+          borderRadius:5,
+          borderSkipped:false
+        }));
+
+      // Total usage for the selected month and selected pipe(s).
+      const monthlyTotalUsage =
+        chart.data.datasets.reduce(
+          (monthSum,ds) =>
+            monthSum +
+            ds.data.reduce(
+              (sum,value) => sum + n(value),
+              0
+            ),
+          0
+        );
+
+      document.getElementById("monthUsageValue").textContent =
+        `${monthlyTotalUsage.toFixed(3)} L`;
+
+      document.getElementById("monthUsageBar").style.width =
+        monthlyTotalUsage > 0 ? "100%" : "0%";
+
+      // Dynamically extend Y-axis according to the highest recorded bucket.
+      const allGraphValues = chart.data.datasets.flatMap(ds =>
+        ds.data.map(value => n(value))
+      );
+
+      const highestUsage = allGraphValues.length
+        ? Math.max(...allGraphValues)
+        : 0;
+
+      // Keep 100 L divisions and round the graph ceiling up to the next 100 L.
+      // Example:
+      // 720 L  -> 800 L max
+      // 1075 L -> 1100 L max
+      // 2240 L -> 2300 L max
+      let yMax = 10;
+
+      if (highestUsage <= 2) {
+        yMax = 2;
+      } else if (highestUsage <= 5) {
+        yMax = 5;
+      } else if (highestUsage <= 10) {
+        yMax = 10;
+      } else if (highestUsage <= 50) {
+        yMax = Math.ceil(highestUsage / 10) * 10;
+      } else if (highestUsage <= 100) {
+        yMax = Math.ceil(highestUsage / 20) * 20;
+      } else {
+        yMax = Math.ceil(highestUsage / 100) * 100;
+      }
+
+      chart.options.scales.y.max = yMax;
+      chart.options.scales.y.ticks.stepSize =
+        yMax <= 10 ? 1 :
+        yMax <= 50 ? 5 :
+        yMax <= 100 ? 10 :
+        100;
+
+      chart.update();
+
+      const errorBox = document.getElementById("error");
+      if (!rows.length) {
+        errorBox.textContent = "No history data is available for the selected pipe and date.";
+        errorBox.style.display = "block";
+      } else {
+        errorBox.style.display = "none";
+      }
+    }
+
+    const today = new Date();
+    document.getElementById("dateFilter").value =
+      `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+
+    document.getElementById("apply").addEventListener("click", () => {
+      const button = document.getElementById("apply");
+      button.disabled = true;
+      button.textContent = "Applied";
+      apply();
+      setTimeout(() => {
+        button.disabled = false;
+        button.textContent = "Apply";
+      }, 700);
+      document.getElementById("analysisResults").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    });
+    document.getElementById("wipeLogs").addEventListener("click",wipeLogs);
+    document.getElementById("pipeFilter").addEventListener("change",apply);
+    document.getElementById("dateFilter").addEventListener("change",apply);
+
+    fetchLive();
+    fetchHistory();
+    setInterval(fetchLive,2000);
+    setInterval(fetchHistory,5000);
+  </script>
+</body>
+</html>
