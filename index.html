@@ -1,885 +1,357 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>8-Pipe Water Flow Dashboard</title>
-  <style>
-    :root {
-      --bg:#07111f; --panel:#10233a; --text:#eef8ff; --muted:#8ea7ba;
-      --blue:#35b9ff; --green:#35d07f; --red:#ff5d73; --border:rgba(255,255,255,.08);
-    }
-    * { box-sizing:border-box; }
-    html { scroll-behavior:smooth; }
-    body {
-      margin:0; min-height:100vh; color:var(--text);
-      font-family:Inter,system-ui,sans-serif;
-      background:linear-gradient(145deg,#06101b,#0a1a2b);
-    }
-    .page { width:min(1500px,calc(100% - 18px)); margin:auto; padding:10px 0 14px; }
-    .top { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:8px; }
-    h1 { margin:0; font-size:clamp(1.4rem,2.5vw,2rem); }
-    .sub { color:var(--muted); margin-top:5px; font-size:.9rem; }
-    .top-actions { display:flex; align-items:center; gap:10px; }
-    .wipe-btn { min-width:118px; white-space:nowrap; }
-    .wipe-btn.wiping { background:#e6a93b; color:#07111f; }
-    .wipe-btn.done { background:var(--green); color:#07111f; }
-    .status { padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:12px; }
-    .dot { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--red); margin-right:7px; }
-    .dot.online { background:var(--green); }
-    .error { display:none; padding:12px; margin-bottom:14px; border:1px solid rgba(255,93,115,.3); background:rgba(255,93,115,.12); border-radius:12px; }
-    .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
-    .card { background:linear-gradient(145deg,#10233a,#0e1e32); border:1px solid var(--border); border-radius:14px; padding:7px 12px; }
-    .head { display:flex; justify-content:space-between; align-items:center; gap:10px; }
-    .badge { padding:4px 7px; border-radius:999px; font-size:.66rem; font-weight:800; color:#ffdbe0; background:rgba(255,93,115,.12); }
-    .badge.flowing { color:#caffdf; background:rgba(53,208,127,.12); }
-    .pipe { height:30px; display:grid; place-items:center; position:relative; }
-    .tube { width:84%; height:20px; border-radius:999px; overflow:hidden; border:2px solid rgba(255,255,255,.15); background:#071424; }
-    .water { height:100%; opacity:0; background:repeating-linear-gradient(90deg,#159edf 0 18px,#6cd8ff 18px 36px); background-size:72px 100%; }
-    .water.flowing { opacity:1; animation:move .8s linear infinite; }
-    .cross { position:absolute; color:var(--red); font-size:20px; }
-    .cross.hidden { display:none; }
-    @keyframes move { to { background-position-x:72px; } }
-    .reading { text-align:center; font-size:1.30rem; font-weight:900; line-height:1.1; }
-    .unit { color:var(--muted); font-size:.72rem; }
-    .metrics { display:flex; justify-content:space-between; border-top:1px solid var(--border); margin-top:4px; padding-top:4px; font-size:.75rem; }
-    .label { color:var(--muted); font-size:.68rem; }
-    .filter { margin-top:7px; display:grid; grid-template-columns:1fr 1.2fr auto; gap:8px; }
-    select,input,button { min-height:34px; border-radius:9px; border:1px solid var(--border); padding:0 10px; color:var(--text); background:#10233a; }
-    button { cursor:pointer; font-weight:800; background:linear-gradient(135deg,#45c5ff,#239fe5); color:#03121c; }
-    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:8px; }
-    .stat { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:8px 12px; }
-    .stat strong { display:block; margin-top:2px; font-size:1.15rem; }
-    .chart { margin-top:8px; background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:8px 12px 14px; min-height:255px; }
-    canvas { width:100%!important; height:205px!important; }
-    @media(max-width:1000px){.grid,.stats{grid-template-columns:repeat(2,1fr)}.filter{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:600px){.top{align-items:flex-start;flex-direction:column}.top-actions{width:100%;flex-wrap:wrap}.grid,.stats,.filter{grid-template-columns:1fr}.status{flex:1}.wipe-btn{flex:1}}
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#102b38"><meta name="description" content="DFAB eight-pipe water monitoring. Live flow, recorded consumption, connection health and usage reports.">
+<title>DFAB · Water Intelligence</title>
+<style>
+:root{color-scheme:light;--bg:#f2f6f8;--panel:#fff;--panel2:#f7fafb;--text:#183440;--muted:#637b88;--line:#dfe9ee;--accent:#008a94;--accent2:#00b8ba;--tint:#e6f6f5;--danger:#c54553;--warn:#966313;--shadow:0 6px 24px #15364605;--nav:#102b38;--chart-grid:#e1eaef}
+[data-theme="dark"]{color-scheme:dark;--bg:#091c26;--panel:#102b38;--panel2:#143340;--text:#e8f3f6;--muted:#9bb3bf;--line:#284652;--accent:#50d7cc;--accent2:#20bdb7;--tint:#173f43;--danger:#ff9ba6;--warn:#efc26e;--shadow:none;--chart-grid:#284652}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:25px}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 Inter,"Segoe UI",system-ui,sans-serif;font-variant-numeric:tabular-nums}button,input,select{font:inherit}button,a,input,select{ -webkit-tap-highlight-color:transparent}button{cursor:pointer}button:disabled{cursor:wait;opacity:.5}a{color:inherit;text-decoration:none}:focus-visible{outline:3px solid var(--accent2);outline-offset:4px}svg.icon{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}button .icon{width:17px;height:17px}h1,h2,h3,p{margin:0}h1{font-size:29px;letter-spacing:-1px;font-weight:700;line-height:1.25}h2{font-size:18px;letter-spacing:-.4px}h3{font-size:15px}small,.small{font-size:12px}.muted{color:var(--muted)}.eyebrow{font-size:12px;letter-spacing:1.7px;text-transform:uppercase;font-weight:700}.sidebar{position:fixed;inset:0 auto 0 0;width:218px;background:var(--nav);color:#bdd0d9;display:flex;flex-direction:column;padding:28px 18px;z-index:20}.brand{display:flex;gap:11px;align-items:center;padding:0 9px;color:#fff}.brand-mark{display:grid;place-items:center;width:40px;height:42px;background:#1c4957;border:1px solid #39616c;border-radius:12px;color:#70e7d9}.brand strong{font-size:22px;letter-spacing:1.5px;display:block;line-height:1.1}.brand small{font-size:10px;letter-spacing:2px;color:#8faebc}.nav-label{margin:46px 15px 14px;font-size:10px;letter-spacing:2px;color:#829eac}.sidebar nav{display:grid;gap:8px}.nav-item{display:flex;align-items:center;gap:12px;padding:12px 15px;border-radius:9px;color:#b8d0db}.nav-item:hover{background:#1b3b49;color:#fff}.nav-item.active{background:#214c59;color:#83eee0;box-shadow:inset 3px 0 #58d5c4}.nav-item span:last-child{margin-left:auto;font-size:11px;background:#32636c;color:#b5f6ed;padding:1px 7px;border-radius:5px}.nav-foot{margin-top:auto;padding:20px 12px 0;font-size:12px;color:#92aebb;border-top:1px solid #294653}.node-label{display:flex;align-items:center;gap:8px;color:#e1eef2;margin-bottom:6px}.main{margin-left:218px;padding:26px 32px 20px;max-width:1860px}.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:29px;gap:16px}.breadcrumb{color:var(--muted);font-size:12px}.breadcrumb b{color:var(--text);font-weight:500;margin-left:8px}.top-actions{display:flex;align-items:center;gap:10px}.date-stamp{margin-right:10px;font-size:12px;color:var(--muted)}.btn{min-height:40px;padding:9px 15px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--text);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:background .2s,transform .2s;white-space:nowrap}.btn:hover{background:var(--panel2);transform:translateY(-1px)}.btn.primary{background:var(--accent);color:#fff;border-color:transparent}[data-theme="dark"] .btn.primary{color:#073038}.btn.danger{color:var(--danger);background:transparent}.icon-btn{padding:10px;min-width:40px}.title-row{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:24px}.title-row p{margin-top:7px;color:var(--muted)}.connection-pill{border:1px solid var(--line);background:var(--panel);padding:8px 12px;border-radius:30px;display:inline-flex;align-items:center;gap:8px;font-size:12px;white-space:nowrap}.dot{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block;flex:none}.is-live .dot{background:#14a986;box-shadow:0 0 0 4px #14a98615;animation:heartbeat 2.4s infinite}.is-offline .dot{background:#d48b3d}.message{padding:12px 16px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:8px;margin-bottom:15px;color:var(--muted)}[hidden]{display:none!important}.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:27px}.summary-card{padding:20px;border-radius:13px;background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);min-width:0}.summary-card.featured{background:linear-gradient(115deg,#134c5b,#087e85);color:#fff;border-color:#146776;position:relative;overflow:hidden}.summary-top{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--muted)}.featured .summary-top,.featured .summary-note{color:#bbdfdf}.summary-value{font-size:32px;letter-spacing:-1px;line-height:1.2;margin-top:14px;font-weight:650;display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}.summary-value em{font-style:normal;font-size:14px;font-weight:500;letter-spacing:0;color:var(--muted)}.featured em{color:#c6efec}.summary-note{margin-top:8px;font-size:12px;color:var(--muted)}.micro-flow{display:inline-flex;gap:3px;align-items:center;height:17px}.micro-flow i{width:3px;height:9px;background:#88ead8;border-radius:4px}.is-live .micro-flow i{animation:bars 1s ease-in-out infinite alternate}.micro-flow i:nth-child(2){animation-delay:.2s;height:16px}.micro-flow i:nth-child(3){animation-delay:.4s;height:12px}.section-heading{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:13px}.section-heading p{font-size:12px;color:var(--muted);margin-top:2px}.section-caption{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px}.pipe-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}.pipe-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:17px 18px;box-shadow:var(--shadow);transition:transform .25s,border-color .25s;min-width:0}.pipe-card:hover{transform:translateY(-3px);border-color:var(--accent2)}.pipe-card.flowing{border-color:color-mix(in srgb,var(--accent2) 40%,var(--line))}.pipe-head{display:flex;align-items:center;justify-content:space-between;gap:6px}.pipe-name{display:flex;align-items:center;gap:8px;font-weight:650}.pipe-number{color:var(--muted);font-size:11px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 5px}.badge{font-size:11px;font-weight:600;color:var(--muted);background:var(--panel2);border-radius:5px;padding:3px 7px;white-space:nowrap}.flowing .badge{background:var(--tint);color:var(--accent)}.pipe-value{display:flex;align-items:baseline;gap:6px;margin:14px 0 9px;font-size:30px;letter-spacing:-1px;font-weight:650}.pipe-value small{font-size:12px;color:var(--muted);font-weight:400;letter-spacing:0}.channel{height:7px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:15px}.channel-fill{height:100%;opacity:0;background:repeating-linear-gradient(110deg,#24baa6 0px,#24baa6 15px,#80e4da 16px,#80e4da 20px);background-size:42px 100%;}.flowing .channel-fill{opacity:1;animation:stream var(--speed,1.3s) linear infinite}.pipe-metrics{display:flex;justify-content:space-between;gap:8px}.pipe-metrics span{font-size:11px;color:var(--muted);display:block;margin-bottom:2px}.pipe-metrics strong{font-size:13px;font-weight:600}.pipe-metrics div:last-child{text-align:right}.pipe-link{width:100%;background:none;border:0;border-top:1px solid var(--line);margin-top:12px;padding:9px 0 0;text-align:left;color:var(--muted);font-size:11px;display:flex;justify-content:space-between;align-items:center}.pipe-link:hover{color:var(--accent)}.pipe-link .icon{width:14px;height:14px}.analysis{margin-top:29px}.filter-bar{display:flex;align-items:end;gap:10px;flex-wrap:wrap;background:var(--panel);padding:14px 18px;border:1px solid var(--line);border-radius:12px;margin-bottom:15px}.field{display:grid;gap:5px}.field label{font-size:11px;color:var(--muted)}input,select{border:1px solid var(--line);border-radius:7px;background:var(--panel2);color:var(--text);min-height:39px;padding:7px 11px;min-width:165px;max-width:100%}.filter-info{margin-left:auto;padding-bottom:10px;font-size:12px;color:var(--muted)}.analysis-layout{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(260px,1fr);gap:15px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);min-width:0}.panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:19px 21px 12px}.panel-head p{color:var(--muted);font-size:12px;margin-top:3px}.segmented{display:flex;background:var(--panel2);border:1px solid var(--line);padding:3px;border-radius:7px}.segmented button{background:none;color:var(--muted);border:0;border-radius:5px;padding:5px 10px;font-size:12px}.segmented button[aria-pressed="true"]{background:var(--panel);color:var(--accent);box-shadow:0 1px 4px #0001}.chart-wrap{padding:0 15px;position:relative;min-height:232px}.chart-wrap svg{display:block;width:100%;height:auto;min-height:210px;max-height:270px}.chart-wrap svg text{fill:var(--muted);font-family:inherit;font-size:12px}.chart-wrap .bar{fill:var(--accent2);opacity:.8;transition:opacity .2s}.chart-wrap .bar:hover{opacity:1}.empty-chart{position:absolute;inset:30px 15px 30px;display:grid;place-items:center;pointer-events:none;color:var(--muted);text-align:center;font-size:13px}.empty-chart span{background:var(--panel);padding:10px 16px;border:1px solid var(--line);border-radius:8px}.chart-footer{display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--line);margin:0 21px;padding:15px 0;font-size:12px;color:var(--muted)}.chart-footer strong{font-size:17px;color:var(--text)}.comparison{padding:4px 21px 19px;display:grid;gap:12px}.compare-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:5px}.compare-top span:first-child{display:flex;align-items:center;gap:7px}.swatch{width:7px;height:7px;border-radius:2px}.track{height:5px;background:var(--panel2);border-radius:4px;overflow:hidden}.track>div{height:100%;border-radius:4px;transition:width .6s}.analysis-stats{display:grid;grid-template-columns:repeat(4,1fr);margin-top:15px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}.mini-stat{padding:17px 20px;border-right:1px solid var(--line)}.mini-stat:last-child{border:0}.mini-stat strong{display:block;font-size:21px;margin:3px 0;letter-spacing:-.5px}.mini-stat span{font-size:12px;color:var(--muted)}.mini-stat small{font-size:11px;color:var(--muted)}.records{margin-top:27px}.table-scroll{overflow:auto;max-height:370px}table{width:100%;border-collapse:collapse;text-align:left;white-space:nowrap;font-size:12px}th{background:var(--panel2);font-size:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;color:var(--muted);position:sticky;top:0}th,td{padding:12px 20px;border-bottom:1px solid var(--line)}tbody tr:last-child td{border-bottom:0}tbody tr:hover{background:var(--panel2)}.table-empty{text-align:center;color:var(--muted);padding:35px}.table-note{font-size:11px;color:var(--muted);padding:12px 20px;border-top:1px solid var(--line)}.health-panel{margin-top:23px;padding:18px 21px;display:flex;gap:25px;align-items:center;flex-wrap:wrap}.health-title{display:flex;align-items:center;gap:10px}.health-item{font-size:11px;color:var(--muted)}.health-item strong{display:block;font-size:13px;color:var(--text);margin-top:2px;font-weight:500}.health-panel .btn{margin-left:auto;font-size:12px}.footer{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:11px;padding:20px 1px 0}.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#173d49;color:#fff;padding:12px 22px;box-shadow:0 6px 25px #0002;border:1px solid #426672;border-radius:10px;z-index:60;max-width:90vw}.dialog{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:18px;padding:26px;width:min(480px,calc(100% - 30px));box-shadow:0 20px 90px #0004}.dialog::backdrop{background:#061d2ab3;backdrop-filter:blur(4px)}.dialog h2{font-size:22px}.dialog p{color:var(--muted);margin-top:12px}.dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px}.details{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}.details>div{border:1px solid var(--line);border-radius:8px;padding:12px}.details dt{font-size:12px;color:var(--muted)}.details dd{margin:4px 0 0;font-size:18px}.formula{background:var(--tint);padding:12px;border-radius:8px;color:var(--accent)!important;font-size:13px}.enter{animation:enter .5s ease both}.pipe-card:nth-child(2n){animation-delay:.06s}.pipe-card:nth-child(3n){animation-delay:.12s}
+@keyframes stream{to{background-position:42px 0}}@keyframes heartbeat{50%{box-shadow:0 0 0 6px #14a98605}}@keyframes bars{to{transform:scaleY(.4)}}@keyframes enter{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@media(min-width:1550px){.main{padding:32px 45px}.pipe-card{padding:21px}.pipe-value{font-size:34px;margin-top:18px}}
+@media(max-width:1200px){.sidebar{width:185px;padding:25px 12px}.main{margin-left:185px;padding:22px}.summary{gap:10px}.summary-card{padding:16px}.summary-value{font-size:27px}.pipe-grid{gap:10px}.pipe-card{padding:14px}.pipe-head{align-items:flex-start;flex-direction:column;gap:6px}.pipe-value{font-size:29px}.date-stamp{display:none}}
+@media(max-width:950px){.sidebar{width:74px;padding:25px 12px}.brand{padding:0;justify-content:center}.brand>div:last-child,.nav-label,.nav-item>span,.nav-foot{display:none}.sidebar nav{margin-top:40px}.nav-item{padding:12px;justify-content:center}.main{margin-left:74px;padding:22px}.summary{grid-template-columns:repeat(2,1fr)}.pipe-grid{grid-template-columns:repeat(2,1fr)}.pipe-head{flex-direction:row;align-items:center}.analysis-layout{grid-template-columns:1fr}.comparison{grid-template-columns:1fr 1fr;gap:14px 24px}.analysis-stats{grid-template-columns:1fr 1fr}.mini-stat:nth-child(2){border-right:0}.mini-stat:nth-child(-n+2){border-bottom:1px solid var(--line)}.filter-info{width:100%;padding:0;margin:0}}
+@media(max-width:580px){.sidebar{position:static;width:auto;height:auto;padding:15px 18px;flex-direction:row;align-items:center;justify-content:space-between}.brand{gap:9px}.brand>div:last-child{display:block}.brand strong{font-size:18px}.brand small{font-size:8px}.brand-mark{width:32px;height:34px}.sidebar nav{display:flex;margin:0;gap:3px}.nav-item{padding:7px}.nav-item.active{box-shadow:none}.main{margin:0;padding:17px 14px}.topbar{margin-bottom:20px}.breadcrumb{font-size:11px}.top-actions{gap:6px}.top-actions .export-top{display:none}.title-row{align-items:flex-start;flex-direction:column;gap:12px}h1{font-size:27px}.title-row p{font-size:12px}.summary{gap:9px;margin-bottom:23px}.summary-card{padding:14px 12px}.summary-top{font-size:12px}.summary-top>.icon{width:17px}.summary-value{font-size:27px;gap:4px}.summary-value em{font-size:11px}.summary-note{font-size:10px}.section-caption{font-size:10px}.section-heading h2{font-size:17px}.pipe-card{padding:13px 11px}.pipe-head{gap:4px}.pipe-name{font-size:12px;gap:4px}.pipe-number{display:none}.badge{font-size:10px;padding:2px 5px}.pipe-value{font-size:28px}.pipe-metrics strong{font-size:11px}.pipe-metrics span{font-size:10px}.pipe-link{font-size:10px}.filter-bar{padding:12px;gap:9px}.field{flex:1;min-width:130px}input,select{width:100%;min-width:0}.filter-bar>.btn{flex:1}.filter-info{font-size:11px}.panel-head{padding:15px}.panel-head h3{font-size:14px}.panel-head p{font-size:11px}.segmented button{padding:5px 7px}.chart-wrap{padding:0 5px;min-height:210px}.chart-wrap svg{min-height:200px}.chart-footer{margin:0 15px;font-size:11px}.comparison{padding:5px 15px 17px}.mini-stat{padding:14px}.mini-stat strong{font-size:19px}.health-panel{padding:16px;gap:15px}.health-title{width:100%}.health-panel .btn{margin:0;width:100%}.footer{flex-direction:column;font-size:10px}.records .panel-head{align-items:flex-start}.records .btn{font-size:11px;padding:7px 9px}.details{gap:8px}.details dd{font-size:16px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* Flow-responsive water animation; fixed-size visualization, not a tank-level gauge. */
+.pipe-card{position:relative;isolation:isolate;overflow:hidden;border-radius:16px}
+.pipe-card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;box-shadow:inset 0 0 0 1px #34cdeb,inset 0 -35px 60px -40px #27badb;transition:opacity .5s}
+.pipe-card.flowing::after{opacity:.8}
+.pipe-droplet{display:grid;place-items:center;width:32px;height:32px;border:1px solid var(--line);background:var(--panel2);border-radius:10px;color:var(--muted);position:relative}
+.pipe-droplet .icon{width:19px;height:19px}
+.flowing .pipe-droplet{background:#dcf8ff;color:#0089b6;border-color:#a6e8f5}
+[data-theme="dark"] .flowing .pipe-droplet{background:#123e50;color:#75eaff;border-color:#296780}
+.flowing .pipe-droplet .icon{animation:drop-drift 2.4s ease-in-out infinite}
+.flowing .pipe-value{color:var(--accent)}
+.water-stage{position:relative;height:66px;margin:0 -2px 16px;overflow:hidden;contain:paint;border:1px solid var(--line);border-radius:11px;background:linear-gradient(180deg,var(--panel2),var(--panel));transition:border-color .4s,background .4s}
+.flowing .water-stage{border-color:#75cfec;background:linear-gradient(180deg,#e2f8ff 0%,#bde9f5 55%,#76d6ec 100%);box-shadow:inset 0 1px 0 #fff9,inset 0 -4px 12px #087c9c13}
+[data-theme="dark"] .flowing .water-stage{border-color:#236583;background:linear-gradient(180deg,#103349 0%,#0b425f 50%,#096888 100%);box-shadow:inset 0 1px 0 #69d9ff25,inset 0 -5px 20px #06b9e21c}
+.water-waves{position:absolute;inset:0 auto 0 0;width:200%;opacity:0;transition:opacity .5s;pointer-events:none}
+.water-waves svg{width:100%;height:100%;display:block}
+.water-waves.back{color:#3cc7e6;transform:translateX(-25%)}
+.water-waves.front{color:#008dcc}
+.water-waves path{fill:currentColor}
+.flowing .water-waves.back{opacity:.38;animation:wave-current calc(var(--speed,1.8s) * 3) linear infinite}
+.flowing .water-waves.front{opacity:.33;animation:wave-current calc(var(--speed,1.8s) * 2) linear infinite}
+[data-theme="dark"] .water-waves.front{color:#02b7ed}
+.water-light{position:absolute;left:0;right:0;top:0;height:100%;opacity:0;background:repeating-linear-gradient(115deg,transparent 0 25px,#fff3 40px,transparent 55px 80px);background-size:160px 100%}
+.flowing .water-light{opacity:.5;animation:current-shimmer calc(var(--speed,1.8s) * 2) linear infinite}
+.water-particles{position:absolute;inset:0;opacity:0;overflow:hidden}
+.flowing .water-particles{opacity:1}
+.water-particles i{position:absolute;left:-12px;top:var(--depth);width:5px;height:5px;border:1px solid #e5fcffbd;background:#d2faff3d;border-radius:50%;opacity:0}
+.water-particles i:nth-child(3n){width:8px;height:8px}.water-particles i:nth-child(2n){width:3px;height:3px;background:#e4fdffe0}
+.flowing .water-particles i{animation:bubble-current calc(var(--speed,1.8s) * 2.6) linear infinite;animation-delay:calc(var(--particle) * var(--speed,1.8s) * -.38)}
+.current-trails{position:absolute;inset:0;opacity:0}
+.current-trails i{position:absolute;left:-40px;width:30px;height:1px;background:linear-gradient(90deg,transparent,#e4fdffcf);border-radius:2px;top:55%}
+.current-trails i:nth-child(2){top:80%;width:44px;animation-delay:-.8s!important}.current-trails i:nth-child(3){top:35%;width:22px;animation-delay:-1.4s!important}
+.flowing .current-trails{opacity:.65}.flowing .current-trails i{animation:trail-current calc(var(--speed,1.8s) * 1.8) linear infinite}
+.stream-direction{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted);opacity:0;font-size:25px;font-weight:500;text-shadow:0 1px 7px #0271a24a;pointer-events:none}
+.flowing .stream-direction{opacity:1;color:#ecfdff}
+.flowing .stream-direction span{animation:direction-pulse calc(var(--speed,1.8s) * 1.6) ease-in-out infinite}
+.flowing .stream-direction span:nth-child(2){animation-delay:calc(var(--speed,1.8s) * -.35)}.flowing .stream-direction span:nth-child(3){animation-delay:calc(var(--speed,1.8s) * -.7)}
+.still-water{position:absolute;left:15px;right:15px;top:50%;height:1px;background:var(--line);opacity:.85;transition:opacity .4s}
+.still-water::before,.still-water::after{content:"";position:absolute;left:25%;right:25%;top:-6px;height:1px;background:var(--line)}.still-water::after{left:38%;right:38%;top:6px}
+.flowing .still-water{opacity:0}
+@keyframes wave-current{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+@keyframes current-shimmer{to{background-position:160px 0}}
+@keyframes bubble-current{0%{left:-12px;transform:translateY(3px);opacity:0}10%{opacity:.7}50%{transform:translateY(-5px)}90%{opacity:.6}100%{left:calc(100% + 12px);transform:translateY(2px);opacity:0}}
+@keyframes trail-current{from{left:-45px;opacity:0}15%{opacity:.9}85%{opacity:.7}to{left:calc(100% + 45px);opacity:0}}
+@keyframes direction-pulse{0%,100%{opacity:.25;transform:translateX(-2px)}50%{opacity:1;transform:translateX(2px)}}
+@keyframes drop-drift{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@media(max-width:580px){.water-stage{height:57px;margin-bottom:13px}.pipe-droplet{width:26px;height:26px;border-radius:8px}.pipe-droplet .icon{width:16px;height:16px}.pipe-card{border-radius:13px}.pipe-name{gap:6px}}
+@media(prefers-reduced-motion:reduce){.water-particles,.current-trails,.stream-direction{display:none}.flowing .water-waves{animation:none}.flowing .water-waves.back{transform:translateX(-25%)}.water-light{animation:none!important}}
+
+
+/* Premium instrument cards — visual motion is driven by actual live flow. */
+.pipe-card{padding:0!important;background:linear-gradient(140deg,#112f42,#091f30);border:1px solid #24465a;border-radius:19px;box-shadow:0 8px 24px #0b344c12;transition:transform .25s,border-color .3s,box-shadow .3s}
+.pipe-card:hover{transform:translateY(-4px);border-color:#3d9bbc;box-shadow:0 14px 30px #0a405924}
+.pipe-card .pipe-head{padding:18px 18px 0;align-items:center;flex-direction:row}
+.pipe-card .pipe-name{color:#f0faff;gap:10px}
+.pipe-card .pipe-name strong{font-size:17px;font-weight:650;letter-spacing:-.3px}
+.pipe-kicker{font-size:9px;letter-spacing:1.2px;color:#83a8bd;display:block;margin-bottom:2px}
+.pipe-card .pipe-droplet{width:37px;height:42px;border-radius:12px;background:#173f55;border:1px solid #315970;color:#7bcce7}
+.pipe-card .badge{color:#a0b5c3;background:#ffffff09;border:1px solid #ffffff16;font-size:10px;letter-spacing:.1px;border-radius:20px;padding:4px 8px}
+.pipe-card .badge::before{content:"";width:5px;height:5px;background:currentColor;display:inline-block;border-radius:50%;margin-right:5px;vertical-align:1px}
+.pipe-card.flowing .badge{color:#7bf5d8;background:#0b6d5d35;border-color:#33ceaa36}
+.pipe-card.flowing .pipe-droplet{color:#72edff;background:#15445b;border-color:#3686a2}
+.flow-scene{position:relative;height:129px;overflow:hidden}
+.pipe-card .pipe-value{position:absolute;z-index:3;left:19px;right:15px;top:13px;display:block;margin:0;line-height:1.2;color:#f2fbff;text-shadow:0 2px 12px #071d30;font-size:42px;letter-spacing:-1.8px}
+.pipe-card.flowing .pipe-value{color:#e0fcff}
+.pipe-value .rate-caption{display:block;color:#9fb9c9;font-size:10px;letter-spacing:.3px;font-weight:400;margin-bottom:4px}
+.pipe-card .pipe-value small{font-size:12px;color:#95c0d4;margin-left:8px;font-weight:500}
+.pipe-card .water-stage{position:absolute;inset:auto 0 0;height:74px;margin:0;border:0;border-radius:0;background:transparent!important;box-shadow:none!important;pointer-events:none}
+.pipe-card .water-waves.back{color:#33cdf0}.pipe-card .water-waves.front{color:#008fce}
+.pipe-card.flowing .water-waves.back{opacity:.24}.pipe-card.flowing .water-waves.front{opacity:.32}
+.pipe-card .water-stage::after{content:"";position:absolute;inset:0;z-index:2;background:linear-gradient(180deg,#0b263633,transparent 60%,#1a526710);pointer-events:none}
+.pipe-card .stream-direction{justify-content:flex-end;align-items:flex-end;gap:5px;padding:0 18px 12px;opacity:.7;font-size:22px}
+.pipe-card:not(.flowing) .stream-direction{opacity:0}
+.pipe-card .still-water{top:74%;left:20px;right:20px;background:#35566a}
+.pipe-card .still-water::before,.pipe-card .still-water::after{background:#284b60}
+.pipe-bottom{position:relative;z-index:4;padding:16px 18px 0;background:var(--panel);border-top:1px solid var(--line);border-radius:0 0 18px 18px}
+.pipe-card .pipe-metrics{gap:14px}
+.pipe-card .pipe-metrics>div{min-width:0}.pipe-card .pipe-metrics>div:last-child{padding-left:14px;border-left:1px solid var(--line)}
+.pipe-card .pipe-metrics span{font-size:11px;margin-bottom:4px}
+.pipe-card .pipe-metrics strong{font-size:14px;overflow-wrap:anywhere}
+.pipe-card .pipe-link{margin-top:13px;padding:11px 0 12px;font-size:11px;color:var(--muted)}
+.pipe-card .pipe-link:hover{color:var(--accent)}
+.pipe-card::after{z-index:5;box-shadow:inset 0 0 0 1px #3bd8ef55}
+.test-wipe{color:#bd3046;border-color:#edbdc5;background:#fff2f4;font-size:12px}
+.test-wipe:hover{background:#ffe6eb}[data-theme="dark"] .test-wipe{color:#ff9dae;background:#492835;border-color:#7b3b4c}
+.test-label{font-size:10px;letter-spacing:1.3px;color:var(--danger);display:block;margin-bottom:10px;font-weight:700}
+@media(max-width:1200px) and (min-width:951px){.pipe-card .pipe-head{padding:14px 12px 0;gap:5px}.pipe-card .pipe-name{gap:6px}.pipe-card .pipe-droplet{width:29px;height:35px}.pipe-kicker{font-size:8px;letter-spacing:.5px}.pipe-card .pipe-name strong{font-size:15px}.pipe-card .badge{font-size:9px;padding:3px 5px}.pipe-bottom{padding:14px 12px 0}.pipe-card .pipe-metrics strong{font-size:12px}.pipe-card .pipe-metrics>div:last-child{padding-left:8px}.pipe-card .pipe-value{left:14px}}
+@media(max-width:580px){.topbar{flex-wrap:wrap}.top-actions{margin-left:auto}.date-stamp{display:none}.pipe-grid{gap:10px}.pipe-card .pipe-head{padding:13px 11px 0;gap:6px;align-items:flex-start}.pipe-card .pipe-name{gap:5px}.pipe-card .pipe-droplet{width:26px;height:31px;border-radius:8px}.pipe-kicker{font-size:8px;letter-spacing:.4px}.pipe-card .pipe-name strong{font-size:14px}.pipe-card .badge{font-size:9px;padding:3px 5px}.pipe-card .badge::before{display:none}.flow-scene{height:115px}.pipe-card .pipe-value{left:12px;top:15px;font-size:34px}.pipe-card .pipe-value small{font-size:10px;margin-left:5px}.pipe-bottom{padding:13px 11px 0}.pipe-card .pipe-metrics{gap:5px}.pipe-card .pipe-metrics span{font-size:9px}.pipe-card .pipe-metrics strong{font-size:11px}.pipe-card .pipe-metrics>div:last-child{padding-left:7px}.pipe-card .pipe-link{font-size:10px}.test-wipe{padding:8px 10px}}
+@media(max-width:370px){.pipe-grid{grid-template-columns:1fr}.pipe-card .pipe-name strong{font-size:17px}.pipe-kicker{font-size:10px}.pipe-card .badge{font-size:11px}.pipe-card .pipe-metrics strong{font-size:14px}}
+
+</style>
 </head>
 <body>
-  <main class="page">
-    <header class="top">
-      <div>
-        <h1>8-Pipe Water Flow Dashboard</h1>
-        
-      </div>
-      <div class="top-actions">
-        <button id="wipeLogs" class="wipe-btn" type="button">Wipe Logs</button>
-        <div class="status">
-          <span id="dot" class="dot"></span>
-          <strong id="connection">Connecting...</strong>
-          <div id="updated" class="sub">Waiting for data</div>
-        </div>
-      </div>
-    </header>
-
-    <div id="error" class="error"></div>
-
-    <section class="grid">
-      <article class="card" data-pipe="1"></article>
-      <article class="card" data-pipe="2"></article>
-      <article class="card" data-pipe="3"></article>
-      <article class="card" data-pipe="4"></article>
-      <article class="card" data-pipe="5"></article>
-      <article class="card" data-pipe="6"></article>
-      <article class="card" data-pipe="7"></article>
-      <article class="card" data-pipe="8"></article>
-    </section>
-
-    <section class="card" style="margin-top:8px">
-      <h3 style="margin-top:0">Analysis Filter</h3>
-      <div class="sub">Select a pipe and date, then click Apply.</div>
-      <div class="filter">
-        <select id="pipeFilter">
-          <option value="all">All Pipes</option>
-          <option value="1">Pipe 1</option>
-          <option value="2">Pipe 2</option>
-          <option value="3">Pipe 3</option>
-          <option value="4">Pipe 4</option>
-          <option value="5">Pipe 5</option>
-          <option value="6">Pipe 6</option>
-          <option value="7">Pipe 7</option>
-          <option value="8">Pipe 8</option>
-        </select>
-        <input id="dateFilter" type="date" />
-        <button id="apply">Apply</button>
-      </div>
-    </section>
-
-    <section id="analysisResults" class="stats">
-      <div class="stat"><span class="label">Total Usage</span><strong id="usage">0.000 L</strong></div>
-      <div class="stat"><span class="label">Average flow</span><strong id="average">0.00 L/min</strong></div>
-      <div class="stat"><span class="label">Peak flow</span><strong id="peak">0.00 L/min</strong></div>
-      <div class="stat"><span class="label">Active duration</span><strong id="duration">0 min</strong></div>
-    </section>
-
-    <section class="chart">
-      <h3 style="margin-top:0">Monthly Water Usage</h3>
-      
-      <canvas id="flowChart"></canvas>
-    </section>
-
-    <section class="card" style="margin-top:8px">
-      <div class="head">
-        <div>
-          <h3 style="margin:0">Total Month Usage</h3>
-          <div class="sub">Total litres recorded for the selected month and selected pipe(s).</div>
-        </div>
-        <strong id="monthUsageValue" style="font-size:1.55rem">0.000 L</strong>
-      </div>
-
-      <div style="margin-top:8px;height:12px;border-radius:999px;background:#071424;border:1px solid var(--border);overflow:hidden">
-        <div id="monthUsageBar"
-             style="height:100%;width:0%;background:linear-gradient(90deg,#159edf,#6cd8ff);transition:width .35s ease"></div>
-      </div>
-    </section>
-  </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    const BASE = "https://water-flow-rate-9ce4f-default-rtdb.firebaseio.com";
-    const LIVE = `${BASE}/waterFlow/live.json`;
-    const HISTORY = `${BASE}/waterFlow/history.json`;
-    const RESET_TOKEN = `${BASE}/waterFlow/control/resetToken.json`;
-    const RESET_ACK = `${BASE}/waterFlow/control/resetAck.json`;
-    const FLOW_THRESHOLD = 0.20;
-    const ESP_STALE_MS = 10000; // If no fresh ESP update for 10 s, treat ESP as offline
-
-    let history = [];
-    let latestLive = null;
-
-    document.querySelectorAll("[data-pipe]").forEach(card => {
-      const p = card.dataset.pipe;
-      card.innerHTML = `
-        <div class="head">
-          <strong>Pipe ${p}</strong>
-          <span id="badge${p}" class="badge">No Flow</span>
-        </div>
-        <div class="pipe">
-          <div class="tube"><div id="water${p}" class="water"></div></div>
-          <div id="cross${p}" class="cross">✕</div>
-        </div>
-        <div class="reading"><span id="flow${p}">0.00</span> <span class="unit">L/min</span></div>
-        <div class="metrics">
-          <div><div class="label">Total</div><strong id="total${p}">0.000 L</strong></div>
-          <div style="text-align:right"><div class="label">Per hour</div><strong id="hour${p}">0.00 L</strong></div>
-        </div>`;
-    });
-
-    const chart = new Chart(document.getElementById("flowChart"), {
-      type:"bar",
-      data:{labels:[],datasets:[]},
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        animation:false,
-        layout:{padding:{bottom:14}},
-        interaction:{mode:"nearest",intersect:true},
-        plugins:{
-          legend:{labels:{color:"#d3e2ee"}},
-          tooltip:{
-            mode:"nearest",
-            intersect:true,
-            callbacks:{
-              title:()=>selectedDateLabel(),
-              label:(ctx)=>
-                `${ctx.dataset.label}: ${Number(ctx.raw||0).toFixed(2)} L`
-            }
-          }
-        },
-        scales:{
-          x:{
-            title:{display:true,text:"Date",color:"#8ea7ba",padding:{top:10,bottom:0}},
-            ticks:{
-              color:"#8ea7ba",
-              maxRotation:0,
-              minRotation:0,
-              autoSkip:false,
-              padding:10
-            },
-            grid:{color:"rgba(255,255,255,.04)"}
-          },
-          y:{
-            beginAtZero:true,
-            min:0,
-            max:100,
-            title:{display:true,text:"Water Used (Litres)",color:"#8ea7ba"},
-            ticks:{
-              stepSize:100,
-              color:"#8ea7ba",
-              callback:value=>`${value} L`
-            },
-            grid:{color:"rgba(255,255,255,.05)"}
-          }
-        }
-      }
-    });
-
-    const n = v => Number.isFinite(Number(v)) ? Number(v) : 0;
-
-    function selectedDateLabel(){
-      const value = document.getElementById("dateFilter").value;
-      if (!value) return "";
-      const d = new Date(`${value}T00:00:00`);
-      return d.toLocaleDateString("en-GB", {
-        day:"numeric",
-        month:"short",
-        year:"numeric"
-      });
-    }
-
-    const valueLabelPlugin = {
-      id:"valueLabelPlugin",
-      afterDatasetsDraw(chart) {
-        const {ctx} = chart;
-        ctx.save();
-        ctx.fillStyle = "#eef8ff";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "bottom";
-        ctx.font = "600 12px Inter, system-ui, sans-serif";
-
-        chart.data.datasets.forEach((dataset,datasetIndex) => {
-          const meta = chart.getDatasetMeta(datasetIndex);
-
-          meta.data.forEach((bar,index) => {
-            const value = n(dataset.data[index]);
-            if (value <= 0) return;
-
-            ctx.fillText(
-              `${value.toFixed(2)} L`,
-              bar.x,
-              bar.y - 6
-            );
-          });
-        });
-
-        ctx.restore();
-      }
-    };
-
-    Chart.register(valueLabelPlugin);
-
-
-    function updatePipe(i, pipe) {
-      const flow = n(pipe?.currentFlowLpm ?? pipe?.flowRate);
-      const total = n(pipe?.totalLitres);
-      const flowing = pipe?.flowing === true || flow >= FLOW_THRESHOLD;
-
-      document.getElementById(`flow${i}`).textContent = flow.toFixed(2);
-      document.getElementById(`total${i}`).textContent = `${total.toFixed(3)} L`;
-      document.getElementById(`hour${i}`).textContent = `${(flow*60).toFixed(2)} L`;
-
-      document.getElementById(`badge${i}`).textContent = flowing ? "Water Flowing" : "No Flow";
-      document.getElementById(`badge${i}`).classList.toggle("flowing", flowing);
-      document.getElementById(`water${i}`).classList.toggle("flowing", flowing);
-      document.getElementById(`cross${i}`).classList.toggle("hidden", flowing);
-    }
-
-    async function fetchLive() {
-      try {
-        const r = await fetch(`${LIVE}?t=${Date.now()}`, {cache:"no-store"});
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-
-        const data = await r.json();
-        if (!data) throw new Error("No live data");
-
-        latestLive = data;
-
-        // IMPORTANT:
-        // Firebase keeps the last written values even after ESP32 power is removed.
-        // Therefore "data exists" does NOT mean the ESP32 is currently online.
-        // We use the ESP32's own Firebase timestamp to detect stale data.
-        const espTimestamp = n(data.timestamp);
-        const ageMs = espTimestamp > 0 ? (Date.now() - espTimestamp) : Infinity;
-        const espFresh = ageMs >= 0 && ageMs <= ESP_STALE_MS;
-
-        if (espFresh) {
-          // Fresh ESP data: show the real live flow and totals.
-          for (let i=1;i<=8;i++) {
-            updatePipe(i, data[`pipe${i}`] || {});
-          }
-
-          document.getElementById("dot").classList.add("online");
-          document.getElementById("connection").textContent = "Live";
-        } else {
-          // ESP is disconnected/stale:
-          // Keep the last cumulative total litres,
-          // but force live flow, per-hour and "Water Flowing" to zero/off.
-          for (let i=1;i<=8;i++) {
-            const pipe = data[`pipe${i}`] || {};
-            updatePipe(i, {
-              ...pipe,
-              currentFlowLpm:0,
-              flowRate:0,
-              flowing:false
-            });
-          }
-
-          document.getElementById("dot").classList.remove("online");
-          document.getElementById("connection").textContent = "ESP Offline";
-        }
-
-        // Show the ACTUAL ESP32 update time, not the browser polling time.
-        document.getElementById("updated").textContent =
-          espTimestamp > 0
-            ? `ESP Updated: ${new Date(espTimestamp).toLocaleString()}`
-            : "ESP update time unavailable";
-
-        document.getElementById("error").style.display = "none";
-
-        // Keep analysis/graph synchronized with stored history.
-        if (history.length) {
-          apply();
-        }
-
-      } catch (e) {
-        document.getElementById("connection").textContent = "Disconnected";
-        document.getElementById("dot").classList.remove("online");
-
-        // If Firebase itself cannot be reached, also force only live-flow display to zero.
-        if (latestLive) {
-          for (let i=1;i<=8;i++) {
-            const pipe = latestLive[`pipe${i}`] || {};
-            updatePipe(i, {
-              ...pipe,
-              currentFlowLpm:0,
-              flowRate:0,
-              flowing:false
-            });
-          }
-        }
-
-        const box = document.getElementById("error");
-        box.textContent = `${e.message}. Check internet/Firebase connection.`;
-        box.style.display = "block";
-      }
-    }
-
-    async function wipeLogs() {
-      const button = document.getElementById("wipeLogs");
-      const errorBox = document.getElementById("error");
-
-      if (button.disabled) return;
-
-      button.disabled = true;
-      button.classList.remove("done");
-      button.classList.add("wiping");
-      button.textContent = "Logs Wiping...";
-      errorBox.style.display = "none";
-
-      try {
-        const token = Date.now();
-
-        // Always send/queue the reset command in Firebase.
-        // The ESP32 will process it whenever it is online.
-        const commandResponse = await fetch(RESET_TOKEN, {
-          method:"PUT",
-          headers:{"Content-Type":"application/json"},
-          body:String(token)
-        });
-
-        if (!commandResponse.ok) {
-          throw new Error(
-            `Reset command failed: HTTP ${commandResponse.status}`
-          );
-        }
-
-        // If ESP is currently offline/stale, do NOT call this a failure.
-        // The reset token remains in Firebase and will be handled
-        // automatically when the ESP reconnects.
-        const liveResponse = await fetch(`${LIVE}?t=${Date.now()}`, {
-          cache:"no-store"
-        });
-
-        let espFresh = false;
-
-        if (liveResponse.ok) {
-          const live = await liveResponse.json();
-          const espTimestamp = n(live?.timestamp);
-          const ageMs = espTimestamp > 0 ? Date.now() - espTimestamp : Infinity;
-          espFresh = ageMs >= 0 && ageMs <= ESP_STALE_MS;
-        }
-
-        if (!espFresh) {
-          button.classList.remove("wiping");
-          button.classList.add("done");
-          button.textContent = "Reset Queued";
-
-          errorBox.textContent =
-            "ESP32 is offline. Reset command is queued in Firebase and will execute automatically when the ESP32 reconnects.";
-          errorBox.style.display = "block";
-
-          setTimeout(() => {
-            button.classList.remove("done");
-            button.textContent = "Wipe Logs";
-            button.disabled = false;
-          }, 2500);
-
-          return;
-        }
-
-        // ESP is online: wait for reset acknowledgement.
-        const timeoutMs = 18000;
-        const pollMs = 400;
-        const startedAt = Date.now();
-        let confirmed = false;
-        let confirmedLive = null;
-
-        while (Date.now() - startedAt < timeoutMs) {
-          await new Promise(resolve => setTimeout(resolve,pollMs));
-
-          const [ackResponse,latestLiveResponse] = await Promise.all([
-            fetch(`${RESET_ACK}?t=${Date.now()}`, {cache:"no-store"}),
-            fetch(`${LIVE}?t=${Date.now()}`, {cache:"no-store"})
-          ]);
-
-          if (!ackResponse.ok || !latestLiveResponse.ok) {
-            continue;
-          }
-
-          const ack = await ackResponse.json();
-          const live = await latestLiveResponse.json();
-
-          const ackMatches = Number(ack) === Number(token);
-
-          const allTotalsZero =
-            live &&
-            [1,2,3,4,5,6,7,8].every(i =>
-              Math.abs(n(live?.[`pipe${i}`]?.totalLitres)) < 0.0005
-            );
-
-          const allPulseTotalsZero =
-            live &&
-            [1,2,3,4,5,6,7,8].every(i =>
-              n(live?.[`pipe${i}`]?.totalPulseCount) === 0
-            );
-
-          if (ackMatches && allTotalsZero && allPulseTotalsZero) {
-            confirmed = true;
-            confirmedLive = live;
-            break;
-          }
-        }
-
-        if (!confirmed) {
-          // ESP may have gone offline while reset was in progress.
-          // The command is still queued in Firebase, so show queued rather than failed.
-          button.classList.remove("wiping");
-          button.classList.add("done");
-          button.textContent = "Reset Queued";
-
-          errorBox.textContent =
-            "Reset command is stored in Firebase. It will complete when the ESP32 is online and acknowledges it.";
-          errorBox.style.display = "block";
-
-          setTimeout(() => {
-            button.classList.remove("done");
-            button.textContent = "Wipe Logs";
-            button.disabled = false;
-          }, 2500);
-
-          return;
-        }
-
-        latestLive = confirmedLive;
-        history = [];
-
-        for (let i=1;i<=8;i++) {
-          updatePipe(i, confirmedLive?.[`pipe${i}`] || {
-            currentFlowLpm:0,
-            totalLitres:0,
-            totalPulseCount:0,
-            flowing:false
-          });
-        }
-
-        document.getElementById("usage").textContent = "0.000 L";
-        document.getElementById("average").textContent = "0.00 L/min";
-        document.getElementById("peak").textContent = "0.00 L/min";
-        document.getElementById("duration").textContent = "0 min";
-        document.getElementById("monthUsageValue").textContent = "0.000 L";
-        document.getElementById("monthUsageBar").style.width = "0%";
-
-        chart.data.datasets.forEach(ds => {
-          ds.data = ds.data.map(() => 0);
-        });
-        chart.options.scales.y.max = 10;
-        chart.options.scales.y.ticks.stepSize = 1;
-        chart.update();
-
-        await fetchHistory();
-        await fetchLive();
-
-        button.classList.remove("wiping");
-        button.classList.add("done");
-        button.textContent = "Wiping Completed";
-
-        setTimeout(() => {
-          button.classList.remove("done");
-          button.textContent = "Wipe Logs";
-          button.disabled = false;
-        }, 1800);
-
-      } catch(error) {
-        button.classList.remove("wiping","done");
-        button.textContent = "Wipe Failed";
-
-        errorBox.textContent = error.message;
-        errorBox.style.display = "block";
-
-        setTimeout(() => {
-          button.textContent = "Wipe Logs";
-          button.disabled = false;
-        }, 3000);
-      }
-    }
-
-    function normalize(raw) {
-      if (!raw) return [];
-
-      return Object.entries(raw).map(([key,v]) => ({
-        timestamp:n(v.timestamp),
-
-        // Support both the older and newer ESP field names.
-        p1f:n(v.pipe1FlowRate ?? v.pipe1CurrentFlowLpm),
-        p2f:n(v.pipe2FlowRate ?? v.pipe2CurrentFlowLpm),
-        p3f:n(v.pipe3FlowRate ?? v.pipe3CurrentFlowLpm),
-        p4f:n(v.pipe4FlowRate ?? v.pipe4CurrentFlowLpm),
-        p5f:n(v.pipe5FlowRate ?? v.pipe5CurrentFlowLpm),
-        p6f:n(v.pipe6FlowRate ?? v.pipe6CurrentFlowLpm),
-        p7f:n(v.pipe7FlowRate ?? v.pipe7CurrentFlowLpm),
-        p8f:n(v.pipe8FlowRate ?? v.pipe8CurrentFlowLpm),
-
-        p1t:n(v.pipe1TotalLitres),
-        p2t:n(v.pipe2TotalLitres),
-        p3t:n(v.pipe3TotalLitres),
-        p4t:n(v.pipe4TotalLitres),
-        p5t:n(v.pipe5TotalLitres),
-        p6t:n(v.pipe6TotalLitres),
-        p7t:n(v.pipe7TotalLitres),
-        p8t:n(v.pipe8TotalLitres),
-
-        p1i:n(v.pipe1IntervalLitres),
-        p2i:n(v.pipe2IntervalLitres),
-        p3i:n(v.pipe3IntervalLitres),
-        p4i:n(v.pipe4IntervalLitres),
-        p5i:n(v.pipe5IntervalLitres),
-        p6i:n(v.pipe6IntervalLitres),
-        p7i:n(v.pipe7IntervalLitres),
-        p8i:n(v.pipe8IntervalLitres),
-
-        h1i:Object.prototype.hasOwnProperty.call(v,"pipe1IntervalLitres"),
-        h2i:Object.prototype.hasOwnProperty.call(v,"pipe2IntervalLitres"),
-        h3i:Object.prototype.hasOwnProperty.call(v,"pipe3IntervalLitres"),
-        h4i:Object.prototype.hasOwnProperty.call(v,"pipe4IntervalLitres"),
-        h5i:Object.prototype.hasOwnProperty.call(v,"pipe5IntervalLitres"),
-        h6i:Object.prototype.hasOwnProperty.call(v,"pipe6IntervalLitres"),
-        h7i:Object.prototype.hasOwnProperty.call(v,"pipe7IntervalLitres"),
-        h8i:Object.prototype.hasOwnProperty.call(v,"pipe8IntervalLitres")
-      }))
-      .filter(x=>x.timestamp)
-      .sort((a,b)=>a.timestamp-b.timestamp);
-    }
-
-    async function fetchHistory() {
-      const r = await fetch(`${HISTORY}?t=${Date.now()}`, {cache:"no-store"});
-      if (r.ok) {
-        history = normalize(await r.json());
-        apply();
-      }
-    }
-
-    function range(dateValue) {
-      const d = new Date(`${dateValue}T00:00:00`);
-      const s = new Date(d);
-      s.setHours(0,0,0,0);
-
-      const e = new Date(s);
-      e.setDate(e.getDate()+1);
-
-      return [s.getTime(),e.getTime()];
-    }
-
-    function localDayKey(timestamp) {
-      const d = new Date(timestamp);
-      const y = d.getFullYear();
-      const m = String(d.getMonth()+1).padStart(2,"0");
-      const day = String(d.getDate()).padStart(2,"0");
-      return `${y}-${m}-${day}`;
-    }
-
-    function shortDateLabel(dayKey) {
-      const d = new Date(`${dayKey}T00:00:00`);
-      return d.toLocaleDateString("en-GB", {
-        day:"numeric",
-        month:"short"
-      });
-    }
-
-    function usageFromRows(rows, pipeNo) {
-      if (!rows.length) return 0;
-
-      // Best method: sum ESP32-recorded interval litres.
-      // This prevents the graph from losing the first litres of a period.
-      const intervalField = `p${pipeNo}i`;
-      const hasIntervalField = `h${pipeNo}i`;
-
-      if (rows.some(row => row[hasIntervalField])) {
-        return rows.reduce(
-          (sum,row) => sum + Math.max(0,n(row[intervalField])),
-          0
-        );
-      }
-
-      // Backward-compatible fallback for older Firebase history.
-      // Add all positive cumulative-total changes.
-      const totalField = `p${pipeNo}t`;
-      let usage = Math.max(0,n(rows[0][totalField]));
-
-      for (let i=1;i<rows.length;i++) {
-        const delta =
-          n(rows[i][totalField]) -
-          n(rows[i-1][totalField]);
-
-        if (delta >= 0) {
-          usage += delta;
-        } else {
-          // Counter was reset; the new post-reset total is new usage.
-          usage += Math.max(0,n(rows[i][totalField]));
-        }
-      }
-
-      return usage;
-    }
-
-    function buildBucketUsage(
-      allRows,
-      pipeNos,
-      year,
-      month,
-      startDay,
-      endDay,
-      bucketIndex
-    ) {
-      const bucketRows = allRows.filter(row => {
-        const d = new Date(row.timestamp);
-
-        if (
-          d.getFullYear() !== year ||
-          d.getMonth() !== month
-        ) {
-          return false;
-        }
-
-        const day = d.getDate();
-
-        // Prevent boundary dates from being counted twice.
-        return bucketIndex === 0
-          ? day >= startDay && day <= endDay
-          : day > startDay && day <= endDay;
-      });
-
-      const result = {};
-
-      pipeNos.forEach(no => {
-        result[`p${no}`] =
-          usageFromRows(bucketRows,no);
-      });
-
-      return result;
-    }
-
-    function apply() {
-      const p = document.getElementById("pipeFilter").value;
-      const date = document.getElementById("dateFilter").value;
-      const [start,end] = range(date);
-      const rows = history.filter(x=>x.timestamp>=start&&x.timestamp<end);
-
-      const pipeNos = p==="all" ? [1,2,3,4,5,6,7,8] : [Number(p)];
-      const flowAt = (row,no) => row[`p${no}f`];
-      const totalAt = (row,no) => row[`p${no}t`];
-
-      let usage=0;
-      pipeNos.forEach(no=>{
-        usage += usageFromRows(rows,no);
-      });
-
-      const flows = rows.map(row=>pipeNos.reduce((s,no)=>s+flowAt(row,no),0));
-      const avg = flows.length ? flows.reduce((a,b)=>a+b,0)/flows.length : 0;
-      const peak = flows.length ? Math.max(...flows) : 0;
-      let mins=0;
-      for(let i=1;i<rows.length;i++){
-        if(flows[i]>=FLOW_THRESHOLD) mins += (rows[i].timestamp-rows[i-1].timestamp)/60000;
-      }
-
-      document.getElementById("usage").textContent = `${usage.toFixed(3)} L`;
-      document.getElementById("average").textContent = `${avg.toFixed(2)} L/min`;
-      document.getElementById("peak").textContent = `${peak.toFixed(2)} L/min`;
-      document.getElementById("duration").textContent = `${Math.round(mins)} min`;
-
-      // Monthly graph: each bar is the total litres recorded
-      // inside that 5-day period.
-      const selectedDateObj = new Date(`${date}T00:00:00`);
-      const year = selectedDateObj.getFullYear();
-      const month = selectedDateObj.getMonth();
-      const monthShort =
-        selectedDateObj.toLocaleDateString(
-          "en-GB",
-          {month:"short"}
-        );
-
-      const lastDay =
-        new Date(
-          year,
-          month + 1,
-          0
-        ).getDate();
-
-      const ranges = [
-        [1,5],
-        [5,10],
-        [10,15],
-        [15,20],
-        [20,25],
-        [25,lastDay]
-      ];
-
-      const bucketData =
-        ranges.map(
-          ([startDay,endDay],idx) =>
-            buildBucketUsage(
-              history,
-              pipeNos,
-              year,
-              month,
-              startDay,
-              endDay,
-              idx
-            )
-        );
-
-      const colors=[
-        "#35b9ff",
-        "#35d07f",
-        "#ffbd59",
-        "#a98cff",
-        "#ff7f50",
-        "#00c2a8",
-        "#f06292",
-        "#9ccc65"
-      ];
-
-      chart.data.labels =
-        ranges.map(
-          ([startDay,endDay]) =>
-            `${startDay}-${endDay} ${monthShort}`
-        );
-
-      chart.data.datasets =
-        pipeNos.map(no => ({
-          label:`Pipe ${no}`,
-          data:bucketData.map(
-            bucket => n(bucket[`p${no}`])
-          ),
-          borderColor:colors[no-1],
-          backgroundColor:colors[no-1]+"66",
-          borderWidth:2,
-          borderRadius:5,
-          borderSkipped:false
-        }));
-
-      // Total usage for the selected month and selected pipe(s).
-      const monthlyTotalUsage =
-        chart.data.datasets.reduce(
-          (monthSum,ds) =>
-            monthSum +
-            ds.data.reduce(
-              (sum,value) => sum + n(value),
-              0
-            ),
-          0
-        );
-
-      document.getElementById("monthUsageValue").textContent =
-        `${monthlyTotalUsage.toFixed(3)} L`;
-
-      document.getElementById("monthUsageBar").style.width =
-        monthlyTotalUsage > 0 ? "100%" : "0%";
-
-      // Dynamically extend Y-axis according to the highest recorded bucket.
-      const allGraphValues = chart.data.datasets.flatMap(ds =>
-        ds.data.map(value => n(value))
-      );
-
-      const highestUsage = allGraphValues.length
-        ? Math.max(...allGraphValues)
-        : 0;
-
-      // Keep 100 L divisions and round the graph ceiling up to the next 100 L.
-      // Example:
-      // 720 L  -> 800 L max
-      // 1075 L -> 1100 L max
-      // 2240 L -> 2300 L max
-      let yMax = 10;
-
-      if (highestUsage <= 2) {
-        yMax = 2;
-      } else if (highestUsage <= 5) {
-        yMax = 5;
-      } else if (highestUsage <= 10) {
-        yMax = 10;
-      } else if (highestUsage <= 50) {
-        yMax = Math.ceil(highestUsage / 10) * 10;
-      } else if (highestUsage <= 100) {
-        yMax = Math.ceil(highestUsage / 20) * 20;
-      } else {
-        yMax = Math.ceil(highestUsage / 100) * 100;
-      }
-
-      chart.options.scales.y.max = yMax;
-      chart.options.scales.y.ticks.stepSize =
-        yMax <= 10 ? 1 :
-        yMax <= 50 ? 5 :
-        yMax <= 100 ? 10 :
-        100;
-
-      chart.update();
-
-      const errorBox = document.getElementById("error");
-      if (!rows.length) {
-        errorBox.textContent = "No history data is available for the selected pipe and date.";
-        errorBox.style.display = "block";
-      } else {
-        errorBox.style.display = "none";
-      }
-    }
-
-    const today = new Date();
-    document.getElementById("dateFilter").value =
-      `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-
-    document.getElementById("apply").addEventListener("click", () => {
-      const button = document.getElementById("apply");
-      button.disabled = true;
-      button.textContent = "Applied";
-      apply();
-      setTimeout(() => {
-        button.disabled = false;
-        button.textContent = "Apply";
-      }, 700);
-      document.getElementById("analysisResults").scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-    });
-    document.getElementById("wipeLogs").addEventListener("click",wipeLogs);
-    document.getElementById("pipeFilter").addEventListener("change",apply);
-    document.getElementById("dateFilter").addEventListener("change",apply);
-
-    fetchLive();
-    fetchHistory();
-    setInterval(fetchLive,2000);
-    setInterval(fetchHistory,5000);
-  </script>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"><defs>
+<symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3C10 6 5 11 5 15a7 7 0 0 0 14 0c0-4-5-9-7-12Z"/><path d="M8 15a4 4 0 0 0 4 4"/></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 3v17h17M8 15v-4m5 4V6m5 9v-6"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M13 3H5v18h14V9l-6-6Zm0 0v6h6M8 13h8m-8 4h6"/></symbol>
+<symbol id="i-chip" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 3v3m6-3v3M9 18v3m6-3v3M3 9h3m-3 6h3m12-6h3m-3 6h3"/><rect x="10" y="10" width="4" height="4"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 15v5h16v-5"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 7a7 7 0 0 1 12-1l2 3M4 15l2 3a7 7 0 0 0 12-1"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 15a8 8 0 0 1-11-11 9 9 0 1 0 11 11Z"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+<symbol id="i-pulse" viewBox="0 0 24 24"><path d="M2 12h5l3-8 4 16 3-8h5"/></symbol>
+<symbol id="i-wifi" viewBox="0 0 24 24"><path d="M3 8a14 14 0 0 1 18 0M6 12a9 9 0 0 1 12 0m-9 4a4 4 0 0 1 6 0"/><circle cx="12" cy="20" r=".5"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+</defs></svg>
+<aside class="sidebar"><a class="brand" href="#overview" aria-label="DFAB water dashboard"><div class="brand-mark"><svg class="icon"><use href="#i-drop"/></svg></div><div><strong>DFAB</strong><small>WATER INTELLIGENCE</small></div></a><div class="nav-label">WORKSPACE</div><nav aria-label="Main navigation"><a class="nav-item active" href="#overview" title="Overview"><svg class="icon"><use href="#i-grid"/></svg><span>Overview</span><span>8</span></a><a class="nav-item" href="#analysis" title="Usage analytics"><svg class="icon"><use href="#i-chart"/></svg><span>Usage analytics</span></a><a class="nav-item" href="#records" title="Records"><svg class="icon"><use href="#i-file"/></svg><span>Records</span></a><a class="nav-item" href="#system" title="System health"><svg class="icon"><use href="#i-chip"/></svg><span>System health</span></a></nav><div class="nav-foot"><div class="node-label"><svg class="icon"><use href="#i-chip"/></svg>ESP32 · 8 channels</div><p>Terrace water monitoring</p><p style="margin-top:14px;color:#618a99">DFAB Stainless System</p></div></aside>
+<main class="main" id="overview">
+<div class="topbar"><div class="breadcrumb">Operations <b>/ Water monitoring</b></div><div class="top-actions"><span id="todayStamp" class="date-stamp"></span><button id="testWipe" class="btn test-wipe" type="button"><svg class="icon"><use href="#i-trash"/></svg>Test wipe</button><button id="themeToggle" class="btn icon-btn" aria-label="Switch to dark theme" title="Switch theme"><svg class="icon"><use href="#i-moon"/></svg></button><button id="refresh" class="btn icon-btn" aria-label="Refresh readings" title="Refresh readings"><svg class="icon"><use href="#i-refresh"/></svg></button><button class="btn export-top" data-export><svg class="icon"><use href="#i-download"/></svg>Export report</button></div></div>
+<header class="title-row"><div><h1>Water overview</h1><p>Water flow, consumption and connection health across all eight pipes.</p></div><div id="connectionPill" class="connection-pill" role="status"><span class="dot"></span><span id="connection">Connecting to device…</span></div></header>
+<div id="liveError" class="message" role="status" hidden></div><div id="resetMessage" class="message" role="status" hidden></div>
+<section class="summary" aria-label="Live overview">
+<div class="summary-card featured enter"><div class="summary-top"><span>Combined live flow</span><span class="micro-flow" aria-hidden="true"><i></i><i></i><i></i><i></i></span></div><div class="summary-value"><span id="combinedFlow">—</span><em>L/min</em></div><div class="summary-note" id="liveSummaryNote">Waiting for fresh readings</div></div>
+<div class="summary-card enter"><div class="summary-top"><span>Today's consumption</span><svg class="icon"><use href="#i-drop"/></svg></div><div class="summary-value"><span id="todayUsage">—</span><em>L</em></div><div class="summary-note">All pipes · recorded today</div></div>
+<div class="summary-card enter"><div class="summary-top"><span>Pipes flowing</span><svg class="icon"><use href="#i-pulse"/></svg></div><div class="summary-value"><span id="activePipes">—</span><em>/ 8 pipes</em></div><div class="summary-note" id="activeNote">Waiting for device</div></div>
+<div class="summary-card enter"><div class="summary-top"><span>Total metered usage</span><svg class="icon"><use href="#i-chart"/></svg></div><div class="summary-value"><span id="allTime">—</span><em>L</em></div><div class="summary-note">Cumulative · since last reset</div></div>
+</section>
+<section aria-labelledby="pipeHeading"><div class="section-heading"><div><h2 id="pipeHeading">Live pipe monitoring</h2><p>Live water streams · speed follows the measured flow</p></div><div class="section-caption"><span class="dot"></span>Refreshes every 2s</div></div><div class="pipe-grid" id="pipeGrid"></div></section>
+<section id="analysis" class="analysis" aria-labelledby="analysisHeading"><div class="section-heading"><div><h2 id="analysisHeading">Consumption insights</h2><p>Explore your recorded water usage</p></div></div>
+<form id="filterForm" class="filter-bar"><div class="field"><label for="pipeFilter">Pipe</label><select id="pipeFilter"><option value="all">All eight pipes</option><option value="1">Pipe 1</option><option value="2">Pipe 2</option><option value="3">Pipe 3</option><option value="4">Pipe 4</option><option value="5">Pipe 5</option><option value="6">Pipe 6</option><option value="7">Pipe 7</option><option value="8">Pipe 8</option></select></div><div class="field"><label for="dateFilter">Date</label><input id="dateFilter" type="date" required></div><button class="btn primary" type="submit">Apply filters<svg class="icon"><use href="#i-arrow"/></svg></button><button class="btn" id="todayButton" type="button">Today</button><div id="filterInfo" class="filter-info"></div></form>
+<div id="historyError" class="message" role="status" hidden></div>
+<div class="analysis-layout"><article class="panel"><div class="panel-head"><div><h3 id="chartTitle">Monthly consumption</h3><p id="chartSubtitle">Recorded litres by day</p></div><div class="segmented" aria-label="Chart period"><button type="button" data-period="day" aria-pressed="false">Day</button><button type="button" data-period="month" aria-pressed="true">Month</button></div></div><div class="chart-wrap"><svg id="usageChart" viewBox="0 0 720 245" role="img" aria-label="Water consumption chart"></svg><div id="chartEmpty" class="empty-chart" hidden><span>No records for this period</span></div></div><div class="chart-footer"><span id="chartTotalLabel">Total month usage</span><strong id="monthUsageValue">— L</strong></div></article>
+<article class="panel"><div class="panel-head"><div><h3>Usage by pipe</h3><p id="compareSubtitle">Selected day · all pipes</p></div><svg class="icon muted"><use href="#i-drop"/></svg></div><div id="comparison" class="comparison"></div></article></div>
+<div class="analysis-stats"><div class="mini-stat"><span>Selected day usage</span><strong id="usage">— L</strong><small>Recorded volume</small></div><div class="mini-stat"><span>Average flow</span><strong id="average">— L/min</strong><small>Weighted by sample duration</small></div><div class="mini-stat"><span>Peak flow</span><strong id="peak">— L/min</strong><small>Highest recorded sample</small></div><div class="mini-stat"><span>Active duration</span><strong id="duration">— min</strong><small>Observed flowing samples</small></div></div>
+</section>
+<section id="records" class="records panel" aria-labelledby="recordsHeading"><div class="panel-head"><div><h3 id="recordsHeading">Recent readings</h3><p id="recordSummary">Selected date and pipe</p></div><button class="btn" data-export><svg class="icon"><use href="#i-download"/></svg>Download CSV</button></div><div class="table-scroll"><table><thead><tr><th scope="col">Recorded at</th><th scope="col">Pipe</th><th scope="col">Flow · L/min</th><th scope="col">Interval · L</th><th scope="col">Total · L</th><th scope="col">State</th></tr></thead><tbody id="recordBody"><tr><td colspan="6" class="table-empty">Waiting for history…</td></tr></tbody></table></div><div class="table-note" id="historyNote">History is loading. No sample data is displayed.</div></section>
+<section class="panel health-panel" id="system" aria-label="System health"><div class="health-title"><svg class="icon" style="color:var(--accent)"><use href="#i-chip"/></svg><div><h3>System health</h3><span class="small muted">ESP32 · Firebase</span></div></div><div class="health-item">Device last seen<strong id="lastSeen">Waiting for data</strong></div><div class="health-item">Wi-Fi signal<strong id="wifi">—</strong></div><div class="health-item">Data freshness<strong id="freshness">Unknown</strong></div><div class="health-item">Calibration<strong id="calibration">Waiting for device</strong></div><button class="btn danger" id="wipeLogs"><svg class="icon"><use href="#i-trash"/></svg>Wipe logs & totals</button></section>
+<footer class="footer"><span>DFAB · Water Intelligence</span><span id="timezoneNote"></span></footer>
+</main>
+<dialog class="dialog" id="resetDialog" aria-labelledby="resetTitle"><h2 id="resetTitle">Reset water records?</h2><p>This clears the stored history and resets cumulative litres and pulse counts for <strong>all eight pipes</strong>.</p><p>If the ESP32 is offline, the command will stay queued and run when the device reconnects. Export your records first if you need a copy.</p><div class="dialog-actions"><button class="btn" id="cancelReset">Cancel</button><button class="btn danger" id="confirmReset">Reset all eight pipes</button></div></dialog>
+<dialog class="dialog" id="testWipeDialog" aria-labelledby="testWipeTitle"><span class="test-label">TEMPORARY TEST CONTROL</span><h2 id="testWipeTitle">Clear all water data?</h2><p>This immediately deletes all stored water readings, history and reset records for this dashboard. Charts and totals will start empty.</p><p>The ESP32 counters will reset when it receives the command. If it is offline, the dashboard will wait for its acknowledgement before showing live readings again.</p><p>Download a CSV first if you need the existing records.</p><div class="dialog-actions"><button class="btn" id="cancelTestWipe" type="button">Cancel</button><button class="btn danger" id="confirmTestWipe" type="button">Wipe all water data</button></div></dialog>
+<dialog class="dialog" id="detailDialog" aria-labelledby="detailTitle"><div class="section-heading"><h2 id="detailTitle">Pipe details</h2><button class="btn icon-btn" id="closeDetails" aria-label="Close pipe details">✕</button></div><div id="detailBody"></div><div class="dialog-actions"><button class="btn primary" id="analyzePipe">View pipe analytics<svg class="icon"><use href="#i-arrow"/></svg></button></div></dialog>
+<div class="toast" role="status" id="toast" hidden></div>
+<script>
+'use strict';
+// Same Firebase paths and ESP32 field names as the supplied dashboard.
+const BASE='https://water-flow-rate-9ce4f-default-rtdb.firebaseio.com';
+const LIVE=`${BASE}/waterFlow/live.json`,HISTORY=`${BASE}/waterFlow/history.json`;
+const RESET_TOKEN=`${BASE}/waterFlow/control/resetToken.json`,RESET_ACK=`${BASE}/waterFlow/control/resetAck.json`;
+const FLOW_THRESHOLD=0.02,ESP_STALE_MS=10000;
+// TEMPORARY TEST CONTROL: set false to remove the Test wipe button later.
+const ENABLE_TEST_WIPE=true;
+let testWipePending=false,dataGeneration=0;
+const PIPE_NOS=[1,2,3,4,5,6,7,8];
+const COLORS=['#00a99a','#36a6d0','#6479ce','#e2a445','#d786aa','#6ca960','#8c7abe','#4a8f9b'];
+const $=id=>document.getElementById(id);
+const number=v=>Number.isFinite(Number(v))?Number(v):0;
+const nonneg=v=>Math.max(0,number(v));
+const fmt=(v,d=2)=>number(v).toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const icon=name=>`<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+const localDay=t=>{const d=new Date(t);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+let history=[],latestLive=null,historyLoaded=false,liveReachable=false,liveBusy=false,historyBusy=false;
+let selectedDate=localDay(Date.now()),selectedPipe='all',period='month',detailPipe=1,resetBusy=false,resetSending=false,pendingReset=null;
+let toastTimer,historyFailure='',lastHistoryFetch=null;
+const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function message(id,text){$(id).textContent=text;$(id).hidden=!text;}
+function toast(text){clearTimeout(toastTimer);$('toast').textContent=text;$('toast').hidden=false;toastTimer=setTimeout(()=>$('toast').hidden=true,3500);}
+function numeric(id,value,digits=2){const el=$(id);const target=fmt(value,digits);if(el.textContent!==target)el.textContent=target;}
+function isFresh(data=latestLive,now=Date.now()){const t=number(data?.timestamp),age=now-t;return !!data&&data.online!==false&&t>0&&age>=0&&age<=ESP_STALE_MS;}
+function fresh(){return liveReachable&&isFresh();}
+function flowOf(pipe){return nonneg(pipe?.currentFlowLpm??pipe?.flowRate);}
+function hasNumber(v){return v!==null&&v!==undefined&&Number.isFinite(Number(v));}
+function pipeAvailable(pipe){return !!pipe&&(hasNumber(pipe.currentFlowLpm)||hasNumber(pipe.flowRate));}
+function pipeFlowing(pipe){return pipeAvailable(pipe)&&flowOf(pipe)>=FLOW_THRESHOLD;}
+function setTheme(theme){document.documentElement.dataset.theme=theme;$('themeToggle').setAttribute('aria-label',`Switch to ${theme==='dark'?'light':'dark'} theme`);try{localStorage.setItem('dfab-water-theme',theme);}catch{}}
+try{setTheme(localStorage.getItem('dfab-water-theme')||'light');}catch{setTheme('light');}
+$('themeToggle').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
+$('todayStamp').textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+$('dateFilter').value=selectedDate;
+$('timezoneNote').textContent=`Dates use your device timezone · ${Intl.DateTimeFormat().resolvedOptions().timeZone||'Local time'}`;
+$('pipeGrid').innerHTML=PIPE_NOS.map(i=>`<article class="pipe-card enter" id="card${i}"><div class="pipe-head"><div class="pipe-name"><span class="pipe-droplet">${icon('drop')}</span><div><span class="pipe-kicker">FLOW SENSOR · 0${i}</span><strong>Pipe ${i}</strong></div></div><span class="badge" id="badge${i}">Waiting</span></div><div class="flow-scene"><div class="pipe-value"><span class="rate-caption">Instantaneous flow</span><div><span id="flow${i}">—</span><small>L/min</small></div></div><div class="water-stage" aria-hidden="true">
+  <div class="water-light"></div>
+  <div class="water-waves back"><svg viewBox="0 0 400 64" preserveAspectRatio="none"><path d="M0 22 Q25 8 50 22 T100 22 T150 22 T200 22 T250 22 T300 22 T350 22 T400 22 V64 H0Z"/></svg></div>
+  <div class="water-waves front"><svg viewBox="0 0 400 64" preserveAspectRatio="none"><path d="M0 30 Q25 15 50 30 T100 30 T150 30 T200 30 T250 30 T300 30 T350 30 T400 30 V64 H0Z"/></svg></div>
+  <div class="current-trails"><i></i><i></i><i></i></div>
+  <div class="water-particles">${Array.from({length:7},(_,j)=>`<i style="--particle:${j};--depth:${18+(j*13)%64}%"></i>`).join('')}</div>
+  <div class="stream-direction"><span>›</span><span>›</span><span>›</span></div>
+  <div class="still-water"></div>
+</div></div><div class="pipe-bottom"><div class="pipe-metrics"><div><span>Total usage</span><strong id="total${i}">— L</strong></div><div><span>At this rate</span><strong id="hour${i}">— L/h</strong></div></div><button class="pipe-link" data-detail="${i}"><span>Pulse count & calibration</span>${icon('arrow')}</button></div></article>`).join('');
+function renderLive(){
+ const online=fresh();let sum=0,active=0,known=0,total=0,totalKnown=0;
+ document.body.classList.toggle('is-live',online);
+ $('connectionPill').className=`connection-pill ${online?'is-live':'is-offline'}`;
+ $('connection').textContent=online?'Device online · live':latestLive?(liveReachable?'Device offline · stale data':'Connection unavailable'):(liveReachable?'No device readings':'Connecting / unavailable');
+ for(const i of PIPE_NOS){const p=latestLive?.[`pipe${i}`],valid=online&&pipeAvailable(p),flow=flowOf(p),running=valid&&pipeFlowing(p);if(valid){sum+=flow;known++;if(running)active++;}
+  if(hasNumber(p?.totalLitres)){total+=nonneg(p.totalLitres);totalKnown++;}
+  $('card'+i).classList.toggle('flowing',running);$('card'+i).style.setProperty('--speed',`${Math.max(.4,2.4/(1+Math.min(flow,100)/5))}s`);
+  $('flow'+i).textContent=valid?fmt(flow):'—';$('total'+i).textContent=hasNumber(p?.totalLitres)?`${fmt(nonneg(p.totalLitres),3)} L`:'— L';$('hour'+i).textContent=valid?`${fmt(flow*60)} L/h`:'— L/h';$('badge'+i).textContent=valid?(running?'Flowing':'No flow'):(online?'Unavailable':latestLive?'Offline':'Waiting');
+ }
+ $('combinedFlow').textContent=online&&known?fmt(sum):'—';$('activePipes').textContent=online&&known?String(active):'—';$('allTime').textContent=totalKnown?fmt(total,3):'—';
+ $('liveSummaryNote').textContent=online?`${known} of 8 channels reporting`:'Live flow unavailable · totals retained';$('activeNote').textContent=online?`${known-active} idle · ${8-known} unavailable`:'Flow animations paused';
+ const stamp=number(latestLive?.timestamp),age=Math.max(0,Date.now()-stamp);
+ $('lastSeen').textContent=stamp?new Date(stamp).toLocaleString('en-GB'):'Waiting for data';
+ $('freshness').textContent=stamp?(age<60000?`${Math.floor(age/1000)} seconds ago`:`${Math.floor(age/60000)} minutes ago`):'Unknown';
+ const signal=latestLive?.wifiSignalDbm;$('wifi').textContent=hasNumber(signal)?`${number(signal)} dBm${online?'':' · last recorded'}`:'Unavailable';
+ const calibrations=PIPE_NOS.map(i=>latestLive?.[`pipe${i}`]?.pulsesPerLitre).filter(v=>hasNumber(v)&&number(v)>0);
+ $('calibration').textContent=calibrations.length===8&&calibrations.every(v=>number(v)===number(calibrations[0]))?`${fmt(calibrations[0],0)} pulses / litre`:calibrations.length?'Per-pipe calibration':'Unavailable';
+ if(testWipePending){$('connection').textContent='Data cleared · device reset pending';$('liveSummaryNote').textContent='Waiting for ESP32 reset acknowledgement';$('activeNote').textContent='New measurements resume after reset';for(const i of PIPE_NOS)$('badge'+i).textContent='Resetting';}
+ if($('detailDialog').open)renderDetail();
+}
+async function request(url,options={}){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);try{const response=await fetch(url,{cache:'no-store',...options,signal:controller.signal});if(!response.ok)throw new Error(`HTTP ${response.status}`);return await response.json();}finally{clearTimeout(timer);}}
+async function fetchLive(){if(liveBusy||testWipePending)return;const generation=dataGeneration;liveBusy=true;try{const result=await request(`${LIVE}?t=${Date.now()}`);if(generation!==dataGeneration||testWipePending)return;latestLive=result;liveReachable=true;message('liveError',latestLive?'':'No readings are stored yet. Power the ESP32 and connect it to Wi-Fi.');}catch(e){liveReachable=false;message('liveError',`Live connection unavailable (${e.name==='AbortError'?'request timed out':e.message}). Check internet access and Firebase permissions. Saved totals remain visible.`);}finally{liveBusy=false;renderLive();}}
+// Normalize interval volume once across the full chronological history.
+// Legacy cumulative counters use the previous record, never the day's first total.
+function normalize(raw){
+ const entries=raw&&typeof raw==='object'?Object.entries(raw):[];
+ const sorted=entries.filter(([,v])=>v&&typeof v==='object'&&number(v.timestamp)>0).sort((a,b)=>number(a[1].timestamp)-number(b[1].timestamp));
+ const previous=Array(9).fill(null);let previousTime=null;
+ return sorted.map(([key,v])=>{
+  const stamp=number(v.timestamp),gap=previousTime===null?0:Math.max(0,(stamp-previousTime)/1000);previousTime=stamp;
+  const declared=hasNumber(v.historyIntervalSeconds)?nonneg(v.historyIntervalSeconds):5;
+  // Cap observed duration at the nominal sample window; no offline-gap interpolation.
+  const seconds=gap>0?Math.min(gap,declared,30):Math.min(declared,30);
+  const pipes={};for(const i of PIPE_NOS){
+   const tf=`pipe${i}TotalLitres`,iv=`pipe${i}IntervalLitres`,fv=v[`pipe${i}CurrentFlowLpm`]??v[`pipe${i}FlowRate`];
+   const total=hasNumber(v[tf])?nonneg(v[tf]):null;
+   const explicit=hasNumber(v[iv]);let litres=null;
+   if(explicit)litres=nonneg(v[iv]);else if(total!==null&&previous[i]!==null)litres=total>=previous[i]?total-previous[i]:total;
+   if(total!==null)previous[i]=total;
+   pipes[i]={flow:hasNumber(fv)?nonneg(fv):null,total,litres,source:explicit?'interval':litres===null?'unknown':'counter delta'};
+  }
+  return {key,timestamp:stamp,seconds,pipes};
+ });
+}
+async function fetchHistory(){if(historyBusy||testWipePending)return;const generation=dataGeneration;historyBusy=true;try{const result=await request(`${HISTORY}?t=${Date.now()}`);if(generation!==dataGeneration||testWipePending)return;history=normalize(result);historyLoaded=true;historyFailure='';lastHistoryFetch=Date.now();message('historyError','');renderAnalysis();}catch(e){historyFailure=`History unavailable (${e.name==='AbortError'?'request timed out':e.message}). ${historyLoaded?'Showing the last loaded records.':'No usage figures can be calculated yet.'}`;message('historyError',historyFailure);}finally{historyBusy=false;}}
+function dayRange(date){const start=new Date(`${date}T00:00:00`),end=new Date(start);end.setDate(end.getDate()+1);return [start.getTime(),end.getTime()];}
+function selectedNos(){return selectedPipe==='all'?PIPE_NOS:[Number(selectedPipe)];}
+function selectedRows(){const [a,b]=dayRange(selectedDate);return history.filter(r=>r.timestamp>=a&&r.timestamp<b);}
+function usage(rows,nos){return rows.reduce((sum,r)=>sum+nos.reduce((s,i)=>s+nonneg(r.pipes[i]?.litres),0),0);}
+function sampleStats(rows,nos){let weight=0,weighted=0,peak=0,active=0;for(const r of rows){const vals=nos.map(i=>r.pipes[i]?.flow);if(vals.some(v=>v===null||v===undefined))continue;const f=vals.reduce((s,v)=>s+v,0);weight+=r.seconds;weighted+=f*r.seconds;peak=Math.max(peak,f);if(f>=FLOW_THRESHOLD)active+=r.seconds;}return {average:weight?weighted/weight:null,peak:weight?peak:null,minutes:weight?active/60:null};}
+function niceMax(v){if(v<=0)return 10;const magnitude=10**Math.floor(Math.log10(v));return Math.ceil(v/magnitude/2)*2*magnitude;}
+function drawChart(buckets,labels,hasRows){
+ const width=720,height=245,left=57,right=12,top=18,bottom=38,plotW=width-left-right,plotH=height-top-bottom,max=niceMax(Math.max(0,...buckets));
+ let svg=`<title>${esc($('chartTitle').textContent)} in litres</title>`;
+ for(let k=0;k<=4;k++){const y=top+plotH-k*plotH/4,value=max*k/4;svg+=`<line x1="${left}" x2="${width-right}" y1="${y}" y2="${y}" stroke="var(--chart-grid)" stroke-dasharray="3 5"/><text x="${left-10}" y="${y+4}" text-anchor="end">${value>=1000?`${fmt(value/1000,1)}k`:fmt(value,value<1&&value>0?2:1).replace(/\.0$/,'')}</text>`;}
+ const step=plotW/buckets.length,barW=Math.max(3,step*.58);
+ buckets.forEach((v,i)=>{const x=left+i*step+(step-barW)/2,h=plotH*v/max,y=top+plotH-h;
+ if(v>0)svg+=`<rect class="bar" x="${x}" y="${y}" width="${barW}" height="${h}" rx="3" tabindex="0" role="img" aria-label="${esc(labels[i])}: ${fmt(v,3)} litres"><title>${esc(labels[i])}: ${fmt(v,3)} L</title></rect>`;
+ if(i===0||i===buckets.length-1||i%(buckets.length>24?5:4)===0)svg+=`<text x="${left+i*step+step/2}" y="${height-13}" text-anchor="middle">${esc(period==='month'?String(i+1):`${String(i).padStart(2,'0')}:00`)}</text>`;
+ });
+ $('usageChart').innerHTML=svg;$('chartEmpty').hidden=hasRows;
+}
+function renderAnalysis(){
+ const rows=selectedRows(),nos=selectedNos(),date=new Date(`${selectedDate}T00:00:00`),dayLabel=date.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+ $('filterInfo').textContent=`${selectedPipe==='all'?'All pipes':`Pipe ${selectedPipe}`} · ${dayLabel}`;
+ const todayRows=history.filter(r=>localDay(r.timestamp)===localDay(Date.now()));$('todayUsage').textContent=historyLoaded?fmt(usage(todayRows,PIPE_NOS),3):'—';
+ const stats=sampleStats(rows,nos),dayUsage=usage(rows,nos);$('usage').textContent=historyLoaded?`${fmt(dayUsage,3)} L`:'— L';$('average').textContent=stats.average===null?'— L/min':`${fmt(stats.average)} L/min`;$('peak').textContent=stats.peak===null?'— L/min':`${fmt(stats.peak)} L/min`;$('duration').textContent=stats.minutes===null?'— min':`${fmt(stats.minutes,1)} min`;
+ const monthRows=history.filter(r=>{const d=new Date(r.timestamp);return d.getFullYear()===date.getFullYear()&&d.getMonth()===date.getMonth();});
+ const chartRows=period==='month'?monthRows:rows,count=period==='month'?new Date(date.getFullYear(),date.getMonth()+1,0).getDate():24;
+ const buckets=Array(count).fill(0);for(const r of chartRows){const d=new Date(r.timestamp),idx=period==='month'?d.getDate()-1:d.getHours();buckets[idx]+=usage([r],nos);}
+ const labels=buckets.map((_,i)=>period==='month'?`${i+1} ${date.toLocaleDateString('en-GB',{month:'short'})}`:`${String(i).padStart(2,'0')}:00–${String(i+1).padStart(2,'0')}:00`);
+ $('chartTitle').textContent=period==='month'?'Monthly consumption':'Daily consumption';$('chartSubtitle').textContent=period==='month'?`${date.toLocaleDateString('en-GB',{month:'long',year:'numeric'})} · litres by day`:`${dayLabel} · litres by hour`;
+ $('chartTotalLabel').textContent=period==='month'?'Total month usage':'Total day usage';$('monthUsageValue').textContent=historyLoaded?`${fmt(usage(chartRows,nos),3)} L`:'— L';drawChart(buckets,labels,chartRows.length>0);
+ const usagePerPipe=PIPE_NOS.map(i=>usage(rows,[i])),sum=usagePerPipe.reduce((a,b)=>a+b,0);
+ $('compareSubtitle').textContent=`${dayLabel} · all pipes`;
+ $('comparison').innerHTML=PIPE_NOS.map((i,j)=>`<div><div class="compare-top"><span><i class="swatch" style="background:${COLORS[j]}"></i>Pipe ${i}</span><span>${historyLoaded?`${fmt(usagePerPipe[j],2)} L`:'—'}</span></div><div class="track"><div style="width:${sum?usagePerPipe[j]/sum*100:0}%;background:${COLORS[j]}"></div></div></div>`).join('');
+ renderRecords(rows,nos);
+}
+function recordList(rows,nos){return rows.flatMap(r=>nos.filter(i=>r.pipes[i].flow!==null||r.pipes[i].total!==null||r.pipes[i].litres!==null).map(i=>({timestamp:r.timestamp,pipe:i,...r.pipes[i]})));}
+function renderRecords(rows,nos){const records=recordList(rows,nos),latest=records.slice().reverse().slice(0,24);$('recordSummary').textContent=`${records.length.toLocaleString()} pipe readings · latest ${Math.min(records.length,24)} shown`;
+ $('recordBody').innerHTML=latest.length?latest.map(r=>`<tr><td>${esc(new Date(r.timestamp).toLocaleTimeString('en-GB'))}</td><td>Pipe ${r.pipe}</td><td>${r.flow===null?'—':fmt(r.flow)}</td><td>${r.litres===null?'—':fmt(r.litres,4)}</td><td>${r.total===null?'—':fmt(r.total,3)}</td><td><span class="badge" style="${r.flow>=FLOW_THRESHOLD?'color:var(--accent);background:var(--tint)':''}">${r.flow===null?'Unknown':r.flow>=FLOW_THRESHOLD?'Flowing':'No flow'}</span></td></tr>`).join(''):`<tr><td colspan="6" class="table-empty">${historyLoaded?'No records for this date. Try another date or wait for the ESP32 to upload.':'Waiting for history…'}</td></tr>`;
+ const unknown=rows.some(r=>nos.some(i=>r.pipes[i].source==='unknown'));
+ $('historyNote').textContent=`${unknown?'Some older records have no interval volume or earlier counter baseline; unmeasurable usage is excluded. ':''}Volume is assigned to its upload time. Active duration is an estimate from recorded samples; offline gaps are excluded. CSV includes every matching reading.`;
+}
+function exportCSV(){if(!historyLoaded){toast('History is not available yet.');return;}const list=recordList(selectedRows(),selectedNos());if(!list.length){toast('No records to export for the selected date.');return;}
+ const rows=[['Timestamp (ISO)','Local time','Pipe','Flow (L/min)','Interval usage (L)','Cumulative total (L)','Volume source']];
+ for(const r of list)rows.push([new Date(r.timestamp).toISOString(),new Date(r.timestamp).toLocaleString('en-GB'),r.pipe,r.flow??'',r.litres??'',r.total??'',r.source]);
+ const csv='\uFEFF'+rows.map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`DFAB-water-${selectedDate}-${selectedPipe==='all'?'all-pipes':`pipe-${selectedPipe}`}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toast(`Exported ${list.length.toLocaleString()} readings.`);
+}
+function renderDetail(){const i=detailPipe,p=latestLive?.[`pipe${i}`],online=fresh()&&pipeAvailable(p),cal=number(p?.pulsesPerLitre),pulses=p?.totalPulseCount;
+ $('detailTitle').textContent=`Pipe ${i} details`;
+ $('detailBody').innerHTML=`<p>${online?'Live device readings':'Last recorded values · device data is unavailable or stale'}</p><dl class="details"><div><dt>Current flow</dt><dd>${online?fmt(flowOf(p)):'—'} L/min</dd></div><div><dt>Total volume</dt><dd>${hasNumber(p?.totalLitres)?fmt(p.totalLitres,3):'—'} L</dd></div><div><dt>Total pulses</dt><dd>${hasNumber(pulses)?fmt(pulses,0):'—'}</dd></div><div><dt>Calibration</dt><dd>${cal>0?fmt(cal,2):'—'} pulses/L</dd></div></dl><p class="formula">Volume = pulses ÷ pulses per litre<br>Flow = sample litres × 60 ÷ sample seconds${cal>0?`<br>Example: ${fmt(cal,0)} pulses ÷ ${fmt(cal,0)} = 1 litre`:''}</p><p class="small">Calibration comes from your ESP32. “At this rate” is the current flow × 60, expressed in L/h; it is not water already consumed. Water animations indicate flow activity, not tank level or measured pipe fill. Zero flow alone does not confirm a blocked pipe.</p>`;
+}
+$('pipeGrid').addEventListener('click',e=>{const button=e.target.closest('[data-detail]');if(!button)return;detailPipe=Number(button.dataset.detail);renderDetail();$('detailDialog').showModal();});
+$('closeDetails').addEventListener('click',()=>$('detailDialog').close());$('analyzePipe').addEventListener('click',()=>{$('detailDialog').close();$('pipeFilter').value=String(detailPipe);selectedPipe=String(detailPipe);renderAnalysis();$('analysis').scrollIntoView({behavior:reduceMotion?'instant':'smooth'});});
+function applyFilters(){if(!$('dateFilter').value||!Number.isFinite(new Date(`${$('dateFilter').value}T00:00:00`).getTime())){toast('Choose a valid date.');return;}selectedDate=$('dateFilter').value;selectedPipe=$('pipeFilter').value;renderAnalysis();toast('Filters applied.');}
+$('filterForm').addEventListener('submit',e=>{e.preventDefault();applyFilters();});$('todayButton').addEventListener('click',()=>{$('dateFilter').value=localDay(Date.now());applyFilters();});
+for(const b of document.querySelectorAll('[data-period]'))b.addEventListener('click',()=>{period=b.dataset.period;for(const x of document.querySelectorAll('[data-period]'))x.setAttribute('aria-pressed',String(x===b));renderAnalysis();});
+for(const b of document.querySelectorAll('[data-export]'))b.addEventListener('click',exportCSV);
+$('refresh').addEventListener('click',async()=>{if(liveBusy||historyBusy){toast('Readings are already refreshing.');return;}$('refresh').disabled=true;await Promise.all([fetchLive(),fetchHistory()]);$('refresh').disabled=false;toast(liveReachable&&!historyFailure?'Readings refreshed.':'Refresh finished. Check connection messages.');});
+for(const link of document.querySelectorAll('.nav-item'))link.addEventListener('click',()=>{for(const a of document.querySelectorAll('.nav-item'))a.classList.toggle('active',a===link);});
+// Preserve the ESP reset-token / acknowledgement protocol. Never write resets automatically.
+function storePending(token){pendingReset=token;if(!token){testWipePending=false;try{localStorage.removeItem('dfab-water-test-wipe');}catch{}}try{if(token)localStorage.setItem('dfab-water-pending-reset',String(token));else localStorage.removeItem('dfab-water-pending-reset');}catch{}}
+try{pendingReset=Number(localStorage.getItem('dfab-water-pending-reset'))||null;}catch{}
+function resetButton(){const test=$('testWipe');test.hidden=!ENABLE_TEST_WIPE;test.disabled=resetBusy||!!pendingReset;test.innerHTML=icon('trash')+(resetBusy?'Wiping…':testWipePending?'Device reset pending':'Test wipe');const b=$('wipeLogs');b.disabled=resetBusy||!!pendingReset;b.innerHTML=icon('trash')+(resetBusy?'Waiting for device…':pendingReset?'Reset queued':'Wipe logs & totals');}
+$('wipeLogs').addEventListener('click',()=>$('resetDialog').showModal());$('cancelReset').addEventListener('click',()=>$('resetDialog').close());
+$('confirmReset').addEventListener('click',async()=>{
+ if(resetBusy||pendingReset)return;$('resetDialog').close();resetBusy=true;resetSending=true;resetButton();const token=Date.now();
+ // Keep the token before sending: if a response is lost, its outcome is uncertain.
+ storePending(token);
+ try{await request(RESET_TOKEN,{method:'PUT',headers:{'Content-Type':'application/json'},body:String(token)});resetSending=false;message('resetMessage','Reset requested. Waiting for the ESP32 to acknowledge; if offline, it will reset when it reconnects.');await checkReset();}
+ catch(e){message('resetMessage',`The reset request could not be confirmed (${e.name==='AbortError'?'request timed out':e.message}). Checking whether it reached the device; no second reset will be sent.`);}
+ finally{resetBusy=false;resetSending=false;resetButton();}
+});
+let ackBusy=false;
+async function checkReset(){if(!pendingReset||ackBusy||resetSending)return;ackBusy=true;const token=pendingReset;try{
+ const ack=await request(`${RESET_ACK}?t=${Date.now()}`);
+ // A matching acknowledgement is sufficient: water can start flowing immediately after a reset.
+ if(number(ack)>=token){storePending(null);resetButton();message('resetMessage','The ESP32 acknowledged the reset. Refreshing current records.');await Promise.all([fetchHistory(),fetchLive()]);toast('Device reset acknowledged.');}
+ else{const queued=await request(`${RESET_TOKEN}?t=${Date.now()}`);if(number(queued)<token){storePending(null);resetButton();message('resetMessage','The reset request was not stored. Your readings have been retained. You can try again.');}else message('resetMessage',testWipePending?'Water data cleared. ESP32 counter reset pending; live readings will resume after acknowledgement.':'Reset queued. It will execute when the ESP32 reconnects and processes the command.');}
+ }catch{message('resetMessage','Reset acknowledgement is unavailable. The request may still be queued; reconnect to check its status.');}finally{ackBusy=false;}}
+
+// TEMPORARY TEST WIPE — removes only this dashboard's /waterFlow node.
+function clearTestView(){
+ dataGeneration++;history=[];historyLoaded=true;historyFailure='';liveReachable=false;
+ latestLive={timestamp:0,online:false};for(const i of PIPE_NOS)latestLive[`pipe${i}`]={totalLitres:0,totalPulseCount:0,currentFlowLpm:0,flowing:false};
+ message('liveError','');message('historyError','');renderLive();renderAnalysis();
+}
+try{testWipePending=!!pendingReset&&localStorage.getItem('dfab-water-test-wipe')===String(pendingReset);}catch{}
+if(testWipePending)clearTestView();
+$('testWipe').hidden=!ENABLE_TEST_WIPE;
+$('testWipe').addEventListener('click',()=>{if(ENABLE_TEST_WIPE&&!resetBusy&&!pendingReset)$('testWipeDialog').showModal();});
+$('cancelTestWipe').addEventListener('click',()=>$('testWipeDialog').close());
+async function runTestWipe(){
+ if(!ENABLE_TEST_WIPE||resetBusy||pendingReset)return;
+ $('testWipeDialog').close();resetBusy=true;resetSending=true;resetButton();
+ const token=Date.now();storePending(token);
+ // Ignore responses started before the wipe, including reads still in flight.
+ testWipePending=true;dataGeneration++;
+ try{
+  await request(`${BASE}/waterFlow.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({control:{resetToken:token}})});
+  try{localStorage.setItem('dfab-water-test-wipe',String(token));}catch{}
+  clearTestView();message('resetMessage','All stored water readings and history cleared. Waiting for the ESP32 to reset its counters; keep it powered and connected.');
+  toast('Stored water data cleared. Device reset requested.');
+ }catch(e){
+  testWipePending=false;
+  message('resetMessage',`Test wipe could not be confirmed (${e.name==='AbortError'?'request timed out':e.message}). The dashboard has not assumed success. Checking the reset request.`);
+ }finally{resetBusy=false;resetSending=false;resetButton();}
+ await checkReset();
+}
+$('confirmTestWipe').addEventListener('click',runTestWipe);
+
+renderLive();renderAnalysis();resetButton();fetchLive();fetchHistory();if(pendingReset)checkReset();
+setInterval(fetchLive,2000);setInterval(fetchHistory,5000);setInterval(renderLive,1000);setInterval(checkReset,5000);
+window.addEventListener('online',()=>{fetchLive();fetchHistory();});
+window.addEventListener('offline',()=>{liveReachable=false;renderLive();message('liveError','Your browser is offline. Live readings are paused; last recorded totals remain visible.');});
+</script>
 </body>
 </html>
