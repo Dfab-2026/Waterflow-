@@ -130,7 +130,7 @@
 <div class="summary-card featured enter"><div class="summary-top"><span>Combined live flow</span><span class="micro-flow" aria-hidden="true"><i></i><i></i><i></i><i></i></span></div><div class="summary-value"><span id="combinedFlow">—</span><em>L/min</em></div><div class="summary-note" id="liveSummaryNote">Waiting for fresh readings</div></div>
 <div class="summary-card enter"><div class="summary-top"><span>Today's consumption</span><svg class="icon"><use href="#i-drop"/></svg></div><div class="summary-value"><span id="todayUsage">—</span><em>L</em></div><div class="summary-note">All pipes · recorded today</div></div>
 <div class="summary-card enter"><div class="summary-top"><span>Pipes flowing</span><svg class="icon"><use href="#i-pulse"/></svg></div><div class="summary-value"><span id="activePipes">—</span><em>/ 8 pipes</em></div><div class="summary-note" id="activeNote">Waiting for device</div></div>
-<div class="summary-card enter"><div class="summary-top"><span>Total metered usage</span><svg class="icon"><use href="#i-chart"/></svg></div><div class="summary-value"><span id="allTime">—</span><em>L</em></div><div class="summary-note">Cumulative · since last reset</div></div>
+<div class="summary-card enter"><div class="summary-top"><span>Total metered usage</span><svg class="icon"><use href="#i-chart"/></svg></div><div class="summary-value"><span id="allTime">—</span><em>L</em></div><div class="summary-note">Continuous cumulative · since last manual reset</div></div>
 </section>
 <section aria-labelledby="pipeHeading"><div class="section-heading"><div><h2 id="pipeHeading">Live pipe monitoring</h2><p>Live water streams · speed follows the measured flow</p></div><div class="section-caption"><span class="dot"></span>Refreshes every 2s</div></div><div class="pipe-grid" id="pipeGrid"></div></section>
 <section id="analysis" class="analysis" aria-labelledby="analysisHeading"><div class="section-heading"><div><h2 id="analysisHeading">Consumption insights</h2><p>Explore your recorded water usage</p></div></div>
@@ -180,6 +180,53 @@ function flowOf(pipe){return nonneg(pipe?.currentFlowLpm??pipe?.flowRate);}
 function hasNumber(v){return v!==null&&v!==undefined&&Number.isFinite(Number(v));}
 function pipeAvailable(pipe){return !!pipe&&(hasNumber(pipe.currentFlowLpm)||hasNumber(pipe.flowRate));}
 function pipeFlowing(pipe){return pipeAvailable(pipe)&&flowOf(pipe)>=FLOW_THRESHOLD;}
+
+// Continuous cumulative-meter protection.
+// Firebase history is the primary ledger. A same-browser local cache is only a
+// last-known fallback if power is lost before the newest live value reaches history.
+const METER_CACHE_KEY='dfab-water-meter-cache-v2';
+let meterCache={};
+try{meterCache=JSON.parse(localStorage.getItem(METER_CACHE_KEY)||'{}')||{};}catch{meterCache={};}
+function saveMeterCache(){try{localStorage.setItem(METER_CACHE_KEY,JSON.stringify(meterCache));}catch{}}
+function clearMeterCache(){meterCache={};try{localStorage.removeItem(METER_CACHE_KEY);}catch{}}
+function historyAnchor(pipeNo){
+ for(let n=history.length-1;n>=0;n--){
+  const row=history[n],p=row?.pipes?.[pipeNo];
+  if(hasNumber(p?.meterTotal))return {meter:nonneg(p.meterTotal),raw:hasNumber(p.total)?nonneg(p.total):null,timestamp:number(row.timestamp),source:'firebase'};
+ }
+ return null;
+}
+function cachedAnchor(pipeNo){
+ const c=meterCache?.[pipeNo];
+ return c&&hasNumber(c.meter)&&hasNumber(c.timestamp)?{meter:nonneg(c.meter),raw:hasNumber(c.raw)?nonneg(c.raw):null,timestamp:number(c.timestamp),source:'cache'}:null;
+}
+function continuityState(pipeNo){
+ const p=latestLive?.[`pipe${pipeNo}`],liveRaw=hasNumber(p?.totalLitres)?nonneg(p.totalLitres):null,liveStamp=number(latestLive?.timestamp);
+ const h=historyAnchor(pipeNo),c=cachedAnchor(pipeNo);
+ // Prefer the newest trustworthy anchor. History wins ties because it is shared/cloud data.
+ let anchor=!h?c:!c?h:(h.timestamp>=c.timestamp?h:c);
+ if(liveRaw===null){return {total:anchor?.meter??null,sessionTotal:null,restarted:false,anchor:anchor?.source||'none'};}
+ if(!anchor){return {total:liveRaw,sessionTotal:liveRaw,restarted:false,anchor:'live'};}
+ if(liveStamp>0&&liveStamp<anchor.timestamp){return {total:anchor.meter,sessionTotal:liveRaw,restarted:false,anchor:anchor.source};}
+ let total=anchor.meter,restarted=false;
+ if(hasNumber(anchor.raw)){
+  if(liveRaw+1e-9>=anchor.raw)total+=liveRaw-anchor.raw;
+  else{total+=liveRaw;restarted=true;}
+ }else if(liveStamp>anchor.timestamp){
+  // No raw baseline is available, so never guess extra volume and risk double-counting.
+  total=anchor.meter;
+ }
+ return {total:Math.max(0,total),sessionTotal:liveRaw,restarted,anchor:anchor.source};
+}
+function continuousTotal(pipeNo){return continuityState(pipeNo).total;}
+function rememberLiveMeters(){
+ const stamp=number(latestLive?.timestamp);if(!stamp)return;
+ let changed=false;
+ for(const i of PIPE_NOS){const p=latestLive?.[`pipe${i}`],raw=hasNumber(p?.totalLitres)?nonneg(p.totalLitres):null,state=continuityState(i);if(raw===null||!hasNumber(state.total))continue;
+  const old=meterCache[i];if(!old||stamp>=number(old.timestamp)){meterCache[i]={meter:nonneg(state.total),raw,timestamp:stamp};changed=true;}
+ }
+ if(changed)saveMeterCache();
+}
 function setTheme(theme){document.documentElement.dataset.theme=theme;$('themeToggle').setAttribute('aria-label',`Switch to ${theme==='dark'?'light':'dark'} theme`);try{localStorage.setItem('dfab-water-theme',theme);}catch{}}
 try{setTheme(localStorage.getItem('dfab-water-theme')||'light');}catch{setTheme('light');}
 $('themeToggle').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
@@ -196,23 +243,25 @@ $('pipeGrid').innerHTML=PIPE_NOS.map(i=>`<article class="pipe-card enter" id="ca
   <div class="still-water"></div>
 </div></div><div class="pipe-bottom"><div class="pipe-metrics"><div><span>Total usage</span><strong id="total${i}">— L</strong></div><div><span>At this rate</span><strong id="hour${i}">— L/h</strong></div></div><button class="pipe-link" data-detail="${i}"><span>Pulse count & calibration</span>${icon('arrow')}</button></div></article>`).join('');
 function renderLive(){
- const online=fresh();let sum=0,active=0,known=0,total=0,totalKnown=0;
+ const online=fresh();let sum=0,active=0,known=0,total=0,totalKnown=0,restartSafePipes=0;
  document.body.classList.toggle('is-live',online);
  $('connectionPill').className=`connection-pill ${online?'is-live':'is-offline'}`;
  $('connection').textContent=online?'Device online · live':latestLive?(liveReachable?'Device offline · stale data':'Connection unavailable'):(liveReachable?'No device readings':'Connecting / unavailable');
- for(const i of PIPE_NOS){const p=latestLive?.[`pipe${i}`],valid=online&&pipeAvailable(p),flow=flowOf(p),running=valid&&pipeFlowing(p);if(valid){sum+=flow;known++;if(running)active++;}
-  if(hasNumber(p?.totalLitres)){total+=nonneg(p.totalLitres);totalKnown++;}
+ for(const i of PIPE_NOS){const p=latestLive?.[`pipe${i}`],valid=online&&pipeAvailable(p),flow=flowOf(p),running=valid&&pipeFlowing(p),continuity=continuityState(i);if(valid){sum+=flow;known++;if(running)active++;}
+  if(hasNumber(continuity.total)){total+=nonneg(continuity.total);totalKnown++;}
+  if(continuity.restarted)restartSafePipes++;
   $('card'+i).classList.toggle('flowing',running);$('card'+i).style.setProperty('--speed',`${Math.max(.4,2.4/(1+Math.min(flow,100)/5))}s`);
-  $('flow'+i).textContent=valid?fmt(flow):'—';$('total'+i).textContent=hasNumber(p?.totalLitres)?`${fmt(nonneg(p.totalLitres),3)} L`:'— L';$('hour'+i).textContent=valid?`${fmt(flow*60)} L/h`:'— L/h';$('badge'+i).textContent=valid?(running?'Flowing':'No flow'):(online?'Unavailable':latestLive?'Offline':'Waiting');
+  $('flow'+i).textContent=valid?fmt(flow):'—';$('total'+i).textContent=hasNumber(continuity.total)?`${fmt(nonneg(continuity.total),3)} L`:'— L';$('hour'+i).textContent=valid?`${fmt(flow*60)} L/h`:'— L/h';$('badge'+i).textContent=valid?(running?'Flowing':'No flow'):(online?'Unavailable':latestLive?'Offline':'Waiting');
  }
  $('combinedFlow').textContent=online&&known?fmt(sum):'—';$('activePipes').textContent=online&&known?String(active):'—';$('allTime').textContent=totalKnown?fmt(total,3):'—';
- $('liveSummaryNote').textContent=online?`${known} of 8 channels reporting`:'Live flow unavailable · totals retained';$('activeNote').textContent=online?`${known-active} idle · ${8-known} unavailable`:'Flow animations paused';
+ $('liveSummaryNote').textContent=online?`${known} of 8 channels reporting${restartSafePipes?' · power-restart continuity active':''}`:'Live flow unavailable · last cumulative totals retained';$('activeNote').textContent=online?`${known-active} idle · ${8-known} unavailable`:'Flow animations paused';
  const stamp=number(latestLive?.timestamp),age=Math.max(0,Date.now()-stamp);
  $('lastSeen').textContent=stamp?new Date(stamp).toLocaleString('en-GB'):'Waiting for data';
  $('freshness').textContent=stamp?(age<60000?`${Math.floor(age/1000)} seconds ago`:`${Math.floor(age/60000)} minutes ago`):'Unknown';
  const signal=latestLive?.wifiSignalDbm;$('wifi').textContent=hasNumber(signal)?`${number(signal)} dBm${online?'':' · last recorded'}`:'Unavailable';
  const calibrations=PIPE_NOS.map(i=>latestLive?.[`pipe${i}`]?.pulsesPerLitre).filter(v=>hasNumber(v)&&number(v)>0);
  $('calibration').textContent=calibrations.length===8&&calibrations.every(v=>number(v)===number(calibrations[0]))?`${fmt(calibrations[0],0)} pulses / litre`:calibrations.length?'Per-pipe calibration':'Unavailable';
+ if(!testWipePending)rememberLiveMeters();
  if(testWipePending){$('connection').textContent='Data cleared · device reset pending';$('liveSummaryNote').textContent='Waiting for ESP32 reset acknowledgement';$('activeNote').textContent='New measurements resume after reset';for(const i of PIPE_NOS)$('badge'+i).textContent='Resetting';}
  if($('detailDialog').open)renderDetail();
 }
@@ -223,19 +272,27 @@ async function fetchLive(){if(liveBusy||testWipePending)return;const generation=
 function normalize(raw){
  const entries=raw&&typeof raw==='object'?Object.entries(raw):[];
  const sorted=entries.filter(([,v])=>v&&typeof v==='object'&&number(v.timestamp)>0).sort((a,b)=>number(a[1].timestamp)-number(b[1].timestamp));
- const previous=Array(9).fill(null);let previousTime=null;
+ const previousRaw=Array(9).fill(null),meter=Array(9).fill(0),meterSeen=Array(9).fill(false);let previousTime=null;
  return sorted.map(([key,v])=>{
   const stamp=number(v.timestamp),gap=previousTime===null?0:Math.max(0,(stamp-previousTime)/1000);previousTime=stamp;
   const declared=hasNumber(v.historyIntervalSeconds)?nonneg(v.historyIntervalSeconds):5;
-  // Cap observed duration at the nominal sample window; no offline-gap interpolation.
+  // Offline time is never interpolated by the dashboard. Backfilled records from the ESP
+  // are sorted by their stored timestamp and handled normally when they arrive.
   const seconds=gap>0?Math.min(gap,declared,30):Math.min(declared,30);
   const pipes={};for(const i of PIPE_NOS){
    const tf=`pipe${i}TotalLitres`,iv=`pipe${i}IntervalLitres`,fv=v[`pipe${i}CurrentFlowLpm`]??v[`pipe${i}FlowRate`];
-   const total=hasNumber(v[tf])?nonneg(v[tf]):null;
-   const explicit=hasNumber(v[iv]);let litres=null;
-   if(explicit)litres=nonneg(v[iv]);else if(total!==null&&previous[i]!==null)litres=total>=previous[i]?total-previous[i]:total;
-   if(total!==null)previous[i]=total;
-   pipes[i]={flow:hasNumber(fv)?nonneg(fv):null,total,litres,source:explicit?'interval':litres===null?'unknown':'counter delta'};
+   const total=hasNumber(v[tf])?nonneg(v[tf]):null,explicit=hasNumber(v[iv]);let litres=null,restarted=false;
+   if(explicit)litres=nonneg(v[iv]);
+   else if(total!==null&&previousRaw[i]!==null)litres=total+1e-9>=previousRaw[i]?Math.max(0,total-previousRaw[i]):total;
+
+   if(total!==null){
+    if(previousRaw[i]===null){meter[i]=total;meterSeen[i]=true;}
+    else if(total+1e-9>=previousRaw[i])meter[i]+=Math.max(0,total-previousRaw[i]);
+    else{meter[i]+=total;restarted=true;}
+    previousRaw[i]=total;
+   }else if(explicit&&meterSeen[i])meter[i]+=litres;
+
+   pipes[i]={flow:hasNumber(fv)?nonneg(fv):null,total,meterTotal:meterSeen[i]?meter[i]:null,litres,source:explicit?'interval':litres===null?'unknown':restarted?'counter restart':'counter delta',restarted};
   }
   return {key,timestamp:stamp,seconds,pipes};
  });
@@ -276,18 +333,18 @@ function renderAnalysis(){
 }
 function recordList(rows,nos){return rows.flatMap(r=>nos.filter(i=>r.pipes[i].flow!==null||r.pipes[i].total!==null||r.pipes[i].litres!==null).map(i=>({timestamp:r.timestamp,pipe:i,...r.pipes[i]})));}
 function renderRecords(rows,nos){const records=recordList(rows,nos),latest=records.slice().reverse().slice(0,24);$('recordSummary').textContent=`${records.length.toLocaleString()} pipe readings · latest ${Math.min(records.length,24)} shown`;
- $('recordBody').innerHTML=latest.length?latest.map(r=>`<tr><td>${esc(new Date(r.timestamp).toLocaleTimeString('en-GB'))}</td><td>Pipe ${r.pipe}</td><td>${r.flow===null?'—':fmt(r.flow)}</td><td>${r.litres===null?'—':fmt(r.litres,4)}</td><td>${r.total===null?'—':fmt(r.total,3)}</td><td><span class="badge" style="${r.flow>=FLOW_THRESHOLD?'color:var(--accent);background:var(--tint)':''}">${r.flow===null?'Unknown':r.flow>=FLOW_THRESHOLD?'Flowing':'No flow'}</span></td></tr>`).join(''):`<tr><td colspan="6" class="table-empty">${historyLoaded?'No records for this date. Try another date or wait for the ESP32 to upload.':'Waiting for history…'}</td></tr>`;
+ $('recordBody').innerHTML=latest.length?latest.map(r=>`<tr><td>${esc(new Date(r.timestamp).toLocaleTimeString('en-GB'))}</td><td>Pipe ${r.pipe}</td><td>${r.flow===null?'—':fmt(r.flow)}</td><td>${r.litres===null?'—':fmt(r.litres,4)}</td><td>${r.meterTotal===null?'—':fmt(r.meterTotal,3)}</td><td><span class="badge" style="${r.flow>=FLOW_THRESHOLD?'color:var(--accent);background:var(--tint)':''}">${r.flow===null?'Unknown':r.flow>=FLOW_THRESHOLD?'Flowing':'No flow'}</span></td></tr>`).join(''):`<tr><td colspan="6" class="table-empty">${historyLoaded?'No records for this date. Try another date or wait for the ESP32 to upload.':'Waiting for history…'}</td></tr>`;
  const unknown=rows.some(r=>nos.some(i=>r.pipes[i].source==='unknown'));
- $('historyNote').textContent=`${unknown?'Some older records have no interval volume or earlier counter baseline; unmeasurable usage is excluded. ':''}Volume is assigned to its upload time. Active duration is an estimate from recorded samples; offline gaps are excluded. CSV includes every matching reading.`;
+ $('historyNote').textContent=`${unknown?'Some older records have no interval volume or earlier counter baseline; unmeasurable usage is excluded. ':''}History totals are reconstructed as one continuous meter across ESP32 restarts. Backfilled offline records remain in timestamp order. Active duration uses recorded samples only; missing powerless periods are never estimated. CSV includes every matching reading.`;
 }
 function exportCSV(){if(!historyLoaded){toast('History is not available yet.');return;}const list=recordList(selectedRows(),selectedNos());if(!list.length){toast('No records to export for the selected date.');return;}
- const rows=[['Timestamp (ISO)','Local time','Pipe','Flow (L/min)','Interval usage (L)','Cumulative total (L)','Volume source']];
- for(const r of list)rows.push([new Date(r.timestamp).toISOString(),new Date(r.timestamp).toLocaleString('en-GB'),r.pipe,r.flow??'',r.litres??'',r.total??'',r.source]);
+ const rows=[['Timestamp (ISO)','Local time','Pipe','Flow (L/min)','Interval usage (L)','Continuous cumulative total (L)','ESP session total (L)','Volume source']];
+ for(const r of list)rows.push([new Date(r.timestamp).toISOString(),new Date(r.timestamp).toLocaleString('en-GB'),r.pipe,r.flow??'',r.litres??'',r.meterTotal??'',r.total??'',r.source]);
  const csv='\uFEFF'+rows.map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`DFAB-water-${selectedDate}-${selectedPipe==='all'?'all-pipes':`pipe-${selectedPipe}`}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toast(`Exported ${list.length.toLocaleString()} readings.`);
 }
-function renderDetail(){const i=detailPipe,p=latestLive?.[`pipe${i}`],online=fresh()&&pipeAvailable(p),cal=number(p?.pulsesPerLitre),pulses=p?.totalPulseCount;
+function renderDetail(){const i=detailPipe,p=latestLive?.[`pipe${i}`],online=fresh()&&pipeAvailable(p),cal=number(p?.pulsesPerLitre),pulses=p?.totalPulseCount,continuity=continuityState(i);
  $('detailTitle').textContent=`Pipe ${i} details`;
- $('detailBody').innerHTML=`<p>${online?'Live device readings':'Last recorded values · device data is unavailable or stale'}</p><dl class="details"><div><dt>Current flow</dt><dd>${online?fmt(flowOf(p)):'—'} L/min</dd></div><div><dt>Total volume</dt><dd>${hasNumber(p?.totalLitres)?fmt(p.totalLitres,3):'—'} L</dd></div><div><dt>Total pulses</dt><dd>${hasNumber(pulses)?fmt(pulses,0):'—'}</dd></div><div><dt>Calibration</dt><dd>${cal>0?fmt(cal,2):'—'} pulses/L</dd></div></dl><p class="formula">Volume = pulses ÷ pulses per litre<br>Flow = sample litres × 60 ÷ sample seconds${cal>0?`<br>Example: ${fmt(cal,0)} pulses ÷ ${fmt(cal,0)} = 1 litre`:''}</p><p class="small">Calibration comes from your ESP32. “At this rate” is the current flow × 60, expressed in L/h; it is not water already consumed. Water animations indicate flow activity, not tank level or measured pipe fill. Zero flow alone does not confirm a blocked pipe.</p>`;
+ $('detailBody').innerHTML=`<p>${online?'Live device readings':'Last recorded values · device data is unavailable or stale'}</p><dl class="details"><div><dt>Current flow</dt><dd>${online?fmt(flowOf(p)):'—'} L/min</dd></div><div><dt>Continuous total</dt><dd>${hasNumber(continuity.total)?fmt(continuity.total,3):'—'} L</dd></div><div><dt>ESP session total</dt><dd>${hasNumber(continuity.sessionTotal)?fmt(continuity.sessionTotal,3):'—'} L</dd></div><div><dt>Session pulses</dt><dd>${hasNumber(pulses)?fmt(pulses,0):'—'}</dd></div><div><dt>Calibration</dt><dd>${cal>0?fmt(cal,2):'—'} pulses/L</dd></div><div><dt>Continuity source</dt><dd>${continuity.anchor==='firebase'?'Firebase history':continuity.anchor==='cache'?'Last dashboard cache':'Current session'}</dd></div></dl><p class="formula">Continuous total = previous saved meter + new litres after reconnect/reboot<br>If the ESP session counter falls after a reboot, the lower value is treated as a new session and added — never used to replace the old total.${cal>0?`<br>Calibration example: ${fmt(cal,0)} pulses ÷ ${fmt(cal,0)} = 1 litre`:''}</p><p class="small">The dashboard keeps cumulative display/history continuous across counter restarts. The upcoming ESP32 firmware update should additionally save counters in NVS and buffer offline logs so this remains reliable even when the browser is closed.</p>`;
 }
 $('pipeGrid').addEventListener('click',e=>{const button=e.target.closest('[data-detail]');if(!button)return;detailPipe=Number(button.dataset.detail);renderDetail();$('detailDialog').showModal();});
 $('closeDetails').addEventListener('click',()=>$('detailDialog').close());$('analyzePipe').addEventListener('click',()=>{$('detailDialog').close();$('pipeFilter').value=String(detailPipe);selectedPipe=String(detailPipe);renderAnalysis();$('analysis').scrollIntoView({behavior:reduceMotion?'instant':'smooth'});});
@@ -299,13 +356,15 @@ $('refresh').addEventListener('click',async()=>{if(liveBusy||historyBusy){toast(
 for(const link of document.querySelectorAll('.nav-item'))link.addEventListener('click',()=>{for(const a of document.querySelectorAll('.nav-item'))a.classList.toggle('active',a===link);});
 // Preserve the ESP reset-token / acknowledgement protocol. Never write resets automatically.
 function storePending(token){pendingReset=token;if(!token){testWipePending=false;try{localStorage.removeItem('dfab-water-test-wipe');}catch{}}try{if(token)localStorage.setItem('dfab-water-pending-reset',String(token));else localStorage.removeItem('dfab-water-pending-reset');}catch{}}
+function setResetKind(kind){try{if(kind)localStorage.setItem('dfab-water-reset-kind',kind);else localStorage.removeItem('dfab-water-reset-kind');}catch{}}
+function getResetKind(){try{return localStorage.getItem('dfab-water-reset-kind')||'';}catch{return '';}}
 try{pendingReset=Number(localStorage.getItem('dfab-water-pending-reset'))||null;}catch{}
 function resetButton(){const test=$('testWipe');test.hidden=!ENABLE_TEST_WIPE;test.disabled=resetBusy||!!pendingReset;test.innerHTML=icon('trash')+(resetBusy?'Wiping…':testWipePending?'Device reset pending':'Test wipe');const b=$('wipeLogs');b.disabled=resetBusy||!!pendingReset;b.innerHTML=icon('trash')+(resetBusy?'Waiting for device…':pendingReset?'Reset queued':'Wipe logs & totals');}
 $('wipeLogs').addEventListener('click',()=>$('resetDialog').showModal());$('cancelReset').addEventListener('click',()=>$('resetDialog').close());
 $('confirmReset').addEventListener('click',async()=>{
  if(resetBusy||pendingReset)return;$('resetDialog').close();resetBusy=true;resetSending=true;resetButton();const token=Date.now();
  // Keep the token before sending: if a response is lost, its outcome is uncertain.
- storePending(token);
+ storePending(token);setResetKind('full-wipe');
  try{await request(RESET_TOKEN,{method:'PUT',headers:{'Content-Type':'application/json'},body:String(token)});resetSending=false;message('resetMessage','Reset requested. Waiting for the ESP32 to acknowledge; if offline, it will reset when it reconnects.');await checkReset();}
  catch(e){message('resetMessage',`The reset request could not be confirmed (${e.name==='AbortError'?'request timed out':e.message}). Checking whether it reached the device; no second reset will be sent.`);}
  finally{resetBusy=false;resetSending=false;resetButton();}
@@ -313,9 +372,14 @@ $('confirmReset').addEventListener('click',async()=>{
 let ackBusy=false;
 async function checkReset(){if(!pendingReset||ackBusy||resetSending)return;ackBusy=true;const token=pendingReset;try{
  const ack=await request(`${RESET_ACK}?t=${Date.now()}`);
- // A matching acknowledgement is sufficient: water can start flowing immediately after a reset.
- if(number(ack)>=token){storePending(null);resetButton();message('resetMessage','The ESP32 acknowledged the reset. Refreshing current records.');await Promise.all([fetchHistory(),fetchLive()]);toast('Device reset acknowledged.');}
- else{const queued=await request(`${RESET_TOKEN}?t=${Date.now()}`);if(number(queued)<token){storePending(null);resetButton();message('resetMessage','The reset request was not stored. Your readings have been retained. You can try again.');}else message('resetMessage',testWipePending?'Water data cleared. ESP32 counter reset pending; live readings will resume after acknowledgement.':'Reset queued. It will execute when the ESP32 reconnects and processes the command.');}
+ if(number(ack)>=token){
+  const resetKind=getResetKind(),wasFullWipe=resetKind==='full-wipe';
+  if(wasFullWipe){
+   try{await request(HISTORY,{method:'DELETE'});history=[];historyLoaded=true;historyFailure='';clearMeterCache();}
+   catch(e){message('resetMessage',`ESP32 reset acknowledged, but Firebase history could not be cleared (${e.name==='AbortError'?'request timed out':e.message}). Totals were retained to prevent an accidental partial wipe.`);return;}
+  }
+  storePending(null);setResetKind('');resetButton();message('resetMessage',wasFullWipe?'Reset complete. Saved history and continuous totals were cleared.':'The ESP32 acknowledged the reset. Refreshing current records.');await Promise.all([fetchHistory(),fetchLive()]);toast(wasFullWipe?'Water logs and totals reset.':'Device reset acknowledged.');
+ }else{const queued=await request(`${RESET_TOKEN}?t=${Date.now()}`);if(number(queued)<token){storePending(null);setResetKind('');resetButton();message('resetMessage','The reset request was not stored. Your readings have been retained. You can try again.');}else message('resetMessage',testWipePending?'Water data cleared. ESP32 counter reset pending; live readings will resume after acknowledgement.':'Reset queued. It will execute when the ESP32 reconnects and processes the command.');}
  }catch{message('resetMessage','Reset acknowledgement is unavailable. The request may still be queued; reconnect to check its status.');}finally{ackBusy=false;}}
 
 // TEMPORARY TEST WIPE — removes only this dashboard's /waterFlow node.
@@ -332,13 +396,13 @@ $('cancelTestWipe').addEventListener('click',()=>$('testWipeDialog').close());
 async function runTestWipe(){
  if(!ENABLE_TEST_WIPE||resetBusy||pendingReset)return;
  $('testWipeDialog').close();resetBusy=true;resetSending=true;resetButton();
- const token=Date.now();storePending(token);
+ const token=Date.now();storePending(token);setResetKind('test-wipe');
  // Ignore responses started before the wipe, including reads still in flight.
  testWipePending=true;dataGeneration++;
  try{
   await request(`${BASE}/waterFlow.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({control:{resetToken:token}})});
   try{localStorage.setItem('dfab-water-test-wipe',String(token));}catch{}
-  clearTestView();message('resetMessage','All stored water readings and history cleared. Waiting for the ESP32 to reset its counters; keep it powered and connected.');
+  clearMeterCache();clearTestView();message('resetMessage','All stored water readings and history cleared. Waiting for the ESP32 to reset its counters; keep it powered and connected.');
   toast('Stored water data cleared. Device reset requested.');
  }catch(e){
   testWipePending=false;
