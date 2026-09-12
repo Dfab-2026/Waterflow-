@@ -709,7 +709,7 @@
         <span>Data synchronization</span>
       </div>
       <strong id="healthSync">Checking</strong>
-      <small id="healthSyncNote">Pending records unavailable</small>
+      <small id="healthSyncNote">Offline collection and synchronization status</small>
     </article>
 
     <article class="health-item health-overall">
@@ -1066,18 +1066,42 @@ function renderSystemHealth(fresh){
    setHealthState('healthArchive','warn');
  }
 
- if(queued===null){
-   $('healthSync').textContent='Unknown';
-   $('healthSyncNote').textContent='Pending-record count not reported';
+ const offlineLitres=hasNumber(latestLive?.offlineCollectedLitresLast)
+   ? nonneg(latestLive.offlineCollectedLitresLast)
+   : 0;
+ const offlineSeconds=hasNumber(latestLive?.offlineDurationSecondsLast)
+   ? Math.max(0,Math.round(number(latestLive.offlineDurationSecondsLast)))
+   : 0;
+ const offlineSyncState=String(latestLive?.offlineSyncState||'').toLowerCase();
+
+ const durationText=offlineSeconds>=3600
+   ? `${Math.floor(offlineSeconds/3600)}h ${Math.floor((offlineSeconds%3600)/60)}m`
+   : offlineSeconds>=60
+     ? `${Math.floor(offlineSeconds/60)}m ${offlineSeconds%60}s`
+     : `${offlineSeconds}s`;
+
+ if(!fresh && latestLive){
+   $('healthSync').textContent='Offline collection active';
+   $('healthSyncNote').textContent='Flow data continues locally and will synchronize when the device reconnects';
    setHealthState('healthSync','warn');
- }else if(queued===0){
+ }else if(queued===null){
+   $('healthSync').textContent='Unknown';
+   $('healthSyncNote').textContent='Synchronization status unavailable';
+   setHealthState('healthSync','warn');
+ }else if(queued>0 || offlineSyncState==='pending'){
+   $('healthSync').textContent='Synchronizing';
+   $('healthSyncNote').textContent=offlineLitres>0
+     ? `${fmt(offlineLitres,3)} L collected while offline · ${queued} record${queued===1?'':'s'} pending`
+     : `${queued} offline record${queued===1?'':'s'} waiting to synchronize`;
+   setHealthState('healthSync',queued<=5?'warn':'bad');
+ }else if(offlineLitres>0){
    $('healthSync').textContent='Synchronized';
-   $('healthSyncNote').textContent='No pending offline records';
+   $('healthSyncNote').textContent=`${fmt(offlineLitres,3)} L collected during ${durationText} offline · synchronized successfully`;
    setHealthState('healthSync','ok');
  }else{
-   $('healthSync').textContent='Pending';
-   $('healthSyncNote').textContent=`${queued} archived record${queued===1?'':'s'} waiting to synchronize`;
-   setHealthState('healthSync',queued<=5?'warn':'bad');
+   $('healthSync').textContent='Synchronized';
+   $('healthSyncNote').textContent='No offline data pending';
+   setHealthState('healthSync','ok');
  }
 
  let overall='ok',overallText='Healthy',overallNote='Connection and data services operating normally';
@@ -1086,7 +1110,9 @@ function renderSystemHealth(fresh){
    overallNote=!liveReachable?'Data service is currently unreachable':'Live controller data is stale or offline';
  }else if(wifi.state!=='ok'||(queued!==null&&queued>0)){
    overall='warn';overallText='Operational';
-   overallNote=wifi.state!=='ok'?'System is running, but network signal needs attention':'System is running while queued records synchronize';
+   overallNote=wifi.state!=='ok'
+     ? 'System is running, but network signal needs attention'
+     : `${fmt(offlineLitres,3)} L offline data is being synchronized`;
  }
  $('healthOverall').textContent=overallText;
  $('healthOverallNote').textContent=overallNote;
