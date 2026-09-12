@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#102b38"><meta name="description" content="DFAB eight-pipe water monitoring. Live flow, recorded consumption, connection health and usage reports.">
-<title>DFAB · Water Intelligence</title>
+<title>DFAB · Water Intelligence · Settings</title>
 <style>
 :root{color-scheme:light;--bg:#f2f6f8;--panel:#fff;--panel2:#f7fafb;--text:#183440;--muted:#637b88;--line:#dfe9ee;--accent:#008a94;--accent2:#00b8ba;--tint:#e6f6f5;--danger:#c54553;--warn:#966313;--shadow:0 6px 24px #15364605;--nav:#102b38;--chart-grid:#e1eaef}
 [data-theme="dark"]{color-scheme:dark;--bg:#091c26;--panel:#102b38;--panel2:#143340;--text:#e8f3f6;--muted:#9bb3bf;--line:#284652;--accent:#50d7cc;--accent2:#20bdb7;--tint:#173f43;--danger:#ff9ba6;--warn:#efc26e;--shadow:none;--chart-grid:#284652}
@@ -97,12 +97,318 @@
 .pipe-card .pipe-link{margin-top:13px;padding:11px 0 12px;font-size:11px;color:var(--muted)}
 .pipe-card .pipe-link:hover{color:var(--accent)}
 .pipe-card::after{z-index:5;box-shadow:inset 0 0 0 1px #3bd8ef55}
-.test-wipe{color:#bd3046;border-color:#edbdc5;background:#fff2f4;font-size:12px}
-.test-wipe:hover{background:#ffe6eb}[data-theme="dark"] .test-wipe{color:#ff9dae;background:#492835;border-color:#7b3b4c}
-.test-label{font-size:10px;letter-spacing:1.3px;color:var(--danger);display:block;margin-bottom:10px;font-weight:700}
+
+[data-theme="dark"] 
+
 @media(max-width:1200px) and (min-width:951px){.pipe-card .pipe-head{padding:14px 12px 0;gap:5px}.pipe-card .pipe-name{gap:6px}.pipe-card .pipe-droplet{width:29px;height:35px}.pipe-kicker{font-size:8px;letter-spacing:.5px}.pipe-card .pipe-name strong{font-size:15px}.pipe-card .badge{font-size:9px;padding:3px 5px}.pipe-bottom{padding:14px 12px 0}.pipe-card .pipe-metrics strong{font-size:12px}.pipe-card .pipe-metrics>div:last-child{padding-left:8px}.pipe-card .pipe-value{left:14px}}
-@media(max-width:580px){.topbar{flex-wrap:wrap}.top-actions{margin-left:auto}.date-stamp{display:none}.pipe-grid{gap:10px}.pipe-card .pipe-head{padding:13px 11px 0;gap:6px;align-items:flex-start}.pipe-card .pipe-name{gap:5px}.pipe-card .pipe-droplet{width:26px;height:31px;border-radius:8px}.pipe-kicker{font-size:8px;letter-spacing:.4px}.pipe-card .pipe-name strong{font-size:14px}.pipe-card .badge{font-size:9px;padding:3px 5px}.pipe-card .badge::before{display:none}.flow-scene{height:115px}.pipe-card .pipe-value{left:12px;top:15px;font-size:34px}.pipe-card .pipe-value small{font-size:10px;margin-left:5px}.pipe-bottom{padding:13px 11px 0}.pipe-card .pipe-metrics{gap:5px}.pipe-card .pipe-metrics span{font-size:9px}.pipe-card .pipe-metrics strong{font-size:11px}.pipe-card .pipe-metrics>div:last-child{padding-left:7px}.pipe-card .pipe-link{font-size:10px}.test-wipe{padding:8px 10px}}
+@media(max-width:580px){.topbar{flex-wrap:wrap}.top-actions{margin-left:auto}.date-stamp{display:none}.pipe-grid{gap:10px}.pipe-card .pipe-head{padding:13px 11px 0;gap:6px;align-items:flex-start}.pipe-card .pipe-name{gap:5px}.pipe-card .pipe-droplet{width:26px;height:31px;border-radius:8px}.pipe-kicker{font-size:8px;letter-spacing:.4px}.pipe-card .pipe-name strong{font-size:14px}.pipe-card .badge{font-size:9px;padding:3px 5px}.pipe-card .badge::before{display:none}.flow-scene{height:115px}.pipe-card .pipe-value{left:12px;top:15px;font-size:34px}.pipe-card .pipe-value small{font-size:10px;margin-left:5px}.pipe-bottom{padding:13px 11px 0}.pipe-card .pipe-metrics{gap:5px}.pipe-card .pipe-metrics span{font-size:9px}.pipe-card .pipe-metrics strong{font-size:11px}.pipe-card .pipe-metrics>div:last-child{padding-left:7px}.pipe-card .pipe-link{font-size:10px}}
 @media(max-width:370px){.pipe-grid{grid-template-columns:1fr}.pipe-card .pipe-name strong{font-size:17px}.pipe-kicker{font-size:10px}.pipe-card .badge{font-size:11px}.pipe-card .pipe-metrics strong{font-size:14px}}
+
+/* ===== Production settings + continuous-flow alert ===== */
+.settings-section{margin-top:27px;scroll-margin-top:24px}
+.settings-heading{margin-bottom:14px}
+.settings-sync{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid var(--line);border-radius:30px;background:var(--panel);font-size:11px;color:var(--muted)}
+.settings-sync.synced .dot{background:#14a986;box-shadow:0 0 0 4px #14a98615}
+.settings-sync.error .dot{background:var(--danger)}
+.settings-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.settings-card{padding:21px}
+.settings-wide{grid-column:1/-1}
+.settings-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:19px}
+.settings-card-head>.icon{color:var(--accent);width:22px;height:22px}
+.settings-card-head p{font-size:12px;color:var(--muted);margin-top:5px;max-width:680px}
+.settings-kicker{display:block;font-size:9px;font-weight:750;letter-spacing:1.6px;color:var(--accent);margin-bottom:4px}
+.setting-inline{display:flex;align-items:end;gap:10px;flex-wrap:wrap}
+.setting-inline .grow{flex:1}
+.input-suffix{display:flex;align-items:center;border:1px solid var(--line);background:var(--panel2);border-radius:8px;overflow:hidden;min-width:0}
+.input-suffix:focus-within{outline:3px solid color-mix(in srgb,var(--accent2) 25%,transparent);border-color:var(--accent2)}
+.input-suffix input{border:0;background:transparent;border-radius:0;outline:0;min-width:0;width:100%}
+.input-suffix span{font-size:11px;color:var(--muted);padding:0 10px;border-left:1px solid var(--line);white-space:nowrap}
+.calibration-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:15px}
+.calibration-item{border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:10px}
+.calibration-item label{font-size:10px;color:var(--muted);display:block;margin-bottom:5px}
+.calibration-item input{width:100%;min-width:0;background:var(--panel);min-height:36px}
+.setting-note{margin-top:13px;padding:10px 12px;border-radius:8px;background:var(--panel2);border:1px solid var(--line);font-size:11px;color:var(--muted)}
+.settings-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.alert-example{display:flex;align-items:center;gap:10px;margin-top:15px;padding:11px 12px;background:#fff2f3;border:1px solid #f2c6cb;border-radius:9px;color:#74333b}
+[data-theme="dark"] .alert-example{background:#3a232a;border-color:#6c3943;color:#ffc1c8}
+.alert-example-dot{width:10px;height:10px;border-radius:50%;background:#d43e50;box-shadow:0 0 0 5px #d43e5018;flex:none}
+.alert-example strong{display:block;font-size:12px}.alert-example small{display:block;font-size:10px;margin-top:1px;opacity:.75}
+
+.animation-option{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:12px;padding:12px;text-align:left;transition:.2s}
+.animation-option:hover{transform:translateY(-2px);border-color:var(--accent2)}
+.animation-option.selected{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 16%,transparent);background:var(--tint)}
+.animation-option strong{display:block;font-size:12px;margin-top:9px}.animation-option small{display:block;font-size:10px;color:var(--muted);margin-top:2px}
+
+.preview-waves i:first-child{bottom:-11px}.preview-waves i:last-child{bottom:-5px;opacity:.3;animation-duration:3s}
+.preview-current i:nth-child(2){top:23px;animation-delay:-.5s}.preview-current i:nth-child(3){top:34px;animation-delay:-.9s}
+.preview-bubbles i:nth-child(2){left:42%;width:4px;height:4px;animation-delay:-.6s}.preview-bubbles i:nth-child(3){left:63%;animation-delay:-1.2s}.preview-bubbles i:nth-child(4){left:79%;width:5px;height:5px;animation-delay:-1.7s}
+
+.animation-intensity-row{margin-top:17px;justify-content:space-between}
+.settings-actions{display:flex;gap:8px;margin-left:auto}
+@keyframes settingWave{to{transform:translateX(20%)}}
+@keyframes settingCurrent{to{left:110%}}
+@keyframes settingBubble{to{bottom:55px;opacity:0}}
+/* Flow warning: > configured continuous duration. */
+.pipe-card.flow-alert{border-color:#ff596b!important;box-shadow:0 0 0 1px #ff596b55,0 12px 30px #a5142824}
+.pipe-card.flow-alert .pipe-head,.pipe-card.flow-alert .flow-scene{background:linear-gradient(145deg,#5d1f2c,#241a28)}
+.pipe-card.flow-alert .badge{background:#c62d42!important;color:#fff!important;border-color:#ff7381!important;animation:alertPulse 1.1s ease-in-out infinite}
+.pipe-card.flow-alert .pipe-droplet{background:#6e2431!important;border-color:#c94a5d!important;color:#ffd8dd!important}
+.pipe-card.flow-alert .pipe-value{color:#fff!important}
+.pipe-card.flow-alert::after{opacity:1!important;box-shadow:inset 0 0 0 1px #ff6678,inset 0 -30px 60px -35px #dc3149}
+@keyframes alertPulse{50%{box-shadow:0 0 0 5px #ff596b20}}
+@media(max-width:950px){.settings-layout{grid-template-columns:1fr}.settings-wide{grid-column:auto}.calibration-grid{grid-template-columns:repeat(2,1fr)}.settings-fields{grid-template-columns:1fr}}
+@media(max-width:580px){.settings-card{padding:15px}.calibration-grid{grid-template-columns:1fr 1fr}.settings-actions{width:100%;margin:0}.settings-actions .btn{flex:1}.settings-sync{font-size:10px}}
+
+
+.settings-section{margin-top:29px}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.pipe-card.flow-alert{border-color:#e35361!important;box-shadow:0 0 0 1px #e3536170,0 15px 38px #b52b3e22!important}
+.pipe-card.flow-alert::after{opacity:1!important;box-shadow:inset 0 0 0 1px #ff6673,inset 0 -38px 65px -38px #d9324f80!important}
+.pipe-card.flow-alert .badge{color:#ffd3d8!important;background:#8d21354a!important;border-color:#ff6b7b66!important}
+.pipe-card.flow-alert .pipe-droplet{color:#ffc4ca!important;border-color:#d9495d!important;background:#5c2634!important}
+.pipe-card.flow-alert .pipe-value{color:#ffe4e7!important}
+
+
+
+
+
+
+
+
+
+@media(max-width:950px){}
+@media(max-width:580px){.settings-savebar .btn{width:100%}}
+
+
+/* Compact production settings */
+.settings-section{margin-top:27px}
+.settings-single-card{padding:0;overflow:hidden}
+.settings-inline-row{display:grid;grid-template-columns:minmax(230px,1.4fr) minmax(185px,.8fr) minmax(185px,.8fr) auto;gap:18px;align-items:end;padding:20px 21px 16px}
+.settings-inline-title{display:flex;gap:12px;align-items:center;align-self:center}
+.settings-inline-title>div{display:grid;gap:2px}
+.settings-inline-title strong{font-size:14px}
+.settings-inline-title span:not(.settings-icon){font-size:11px;color:var(--muted)}
+.settings-icon{display:grid;place-items:center;width:39px;height:39px;border-radius:11px;background:var(--tint);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 20%,var(--line))}
+.inline-setting{display:grid;gap:6px}
+.inline-setting label{font-size:11px;font-weight:650;color:var(--muted)}
+.inline-input{display:flex;align-items:center;gap:8px}
+.inline-input input{width:122px;min-width:0;background:var(--panel2)}
+.inline-input span{font-size:11px;color:var(--muted);white-space:nowrap}
+.settings-save-btn{height:39px}
+.settings-footnote{border-top:1px solid var(--line);padding:10px 21px 12px;color:var(--muted);font-size:11px;background:var(--panel2)}
+
+/* Reconstructed system health */
+.system-card{margin-top:23px;overflow:hidden}
+.system-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 21px;border-bottom:1px solid var(--line)}
+.system-title{display:flex;align-items:center;gap:11px}
+.system-title h3{font-size:15px}
+.system-title p{font-size:11px;color:var(--muted);margin-top:2px}
+.system-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:var(--tint);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 22%,var(--line))}
+.system-state{display:inline-flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);padding:7px 10px;border:1px solid var(--line);border-radius:20px;background:var(--panel2)}
+.system-state.online{color:#16886f;background:#e9f8f3;border-color:#bce7d9}
+[data-theme="dark"] .system-state.online{color:#74e8ce;background:#163b38;border-color:#295d55}
+.system-state.offline{color:var(--warn)}
+.system-metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr))}
+.system-metric{padding:15px 17px;border-right:1px solid var(--line);min-width:0}
+.system-metric:last-child{border-right:0}
+.system-metric span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:5px}
+.system-metric strong{display:block;font-size:12px;font-weight:600;white-space:normal;overflow-wrap:anywhere}
+
+/* Flow alert remains visually clear */
+.pipe-card.flow-alert{border-color:#e35361!important;box-shadow:0 0 0 1px #e3536160,0 14px 32px #b52b3e20!important}
+.pipe-card.flow-alert::after{opacity:1!important;box-shadow:inset 0 0 0 1px #ff6a77,inset 0 -35px 60px -38px #d9324f70!important}
+.pipe-card.flow-alert .badge{color:#ffd9dd!important;background:#7d22334d!important;border-color:#ff758366!important}
+.pipe-card.flow-alert .pipe-droplet{color:#ffd1d5!important;border-color:#d94e61!important;background:#552732!important}
+.pipe-card.flow-alert .pipe-value{color:#ffe9ec!important}
+
+@media(max-width:1200px){
+ .settings-inline-row{grid-template-columns:1fr 1fr;align-items:end}
+ .settings-inline-title{grid-column:1/-1}
+ .settings-save-btn{width:100%}
+ .system-metrics{grid-template-columns:repeat(3,1fr)}
+ .system-metric:nth-child(3){border-right:0}
+ .system-metric:nth-child(-n+3){border-bottom:1px solid var(--line)}
+}
+@media(max-width:700px){
+ .settings-inline-row{grid-template-columns:1fr}
+ .settings-inline-title{grid-column:auto}
+ .inline-input input{width:100%}
+ .inline-input{display:grid;grid-template-columns:1fr auto}
+ .system-head{align-items:flex-start}
+ .system-metrics{grid-template-columns:repeat(2,1fr)}
+ .system-metric:nth-child(3){border-right:1px solid var(--line)}
+ .system-metric:nth-child(2n){border-right:0}
+ .system-metric:nth-child(-n+4){border-bottom:1px solid var(--line)}
+}
+
+
+/* Final layout polish only — confirmed water animation above is unchanged. */
+.pipe-grid{align-items:stretch}
+.pipe-card{height:100%}
+.pipe-bottom{min-height:105px}
+.settings-save-btn{box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 18%,transparent)}
+.system-metric strong{line-height:1.35}
+
+
+/* v8.2: stored readings stay visible while only fresh data animates. */
+.pipe-card.stale-reading .pipe-value{opacity:.88}
+.pipe-card.stale-reading .badge{color:#d7b16b;background:#5a431c24;border-color:#b98c3b40}
+.pipe-card.stale-reading .pipe-droplet{opacity:.82}
+.pipe-card.stale-reading:not(.flowing) .water-stage{filter:saturate(.72)}
+
+
+/* ===== Full production dashboard v9 ===== */
+.title-status{display:flex;align-items:center;justify-content:flex-end}
+
+
+
+
+
+
+[data-theme="dark"] 
+.alert-beacon.alarm 
+
+100%{box-shadow:0 0 0 13px #ed405800}}
+.alert-enable.enabled{border-color:#52b9a8;color:var(--accent);background:var(--tint)}
+.archive-chip{font-size:10px;padding:5px 8px;border:1px solid var(--line);border-radius:20px;color:var(--muted);background:var(--panel2)}
+.analytics-filter [data-filter-field]{display:none}
+.analytics-filter [data-filter-field].visible{display:grid}
+.records-controls{display:flex;align-items:end;gap:10px;flex-wrap:wrap;padding:13px 20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--panel2)}
+.records-controls [data-record-field]{display:none}
+.records-controls [data-record-field].visible{display:grid}
+.records-head{padding-bottom:17px}
+.records-total-strip{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:11px 20px;border-bottom:1px solid var(--line);color:var(--muted);font-size:12px}
+.records-total-strip strong{color:var(--text);font-size:17px}
+.records-explorer .table-scroll{max-height:460px}
+.pipe-card.flow-alert .pipe-head,.pipe-card.flow-alert .flow-scene{background:linear-gradient(145deg,#5d2430,#281a28)}
+.pipe-card.flow-alert .badge{background:#be3046!important;color:#fff!important;border-color:#ef7686!important}
+.pipe-card.flow-alert .pipe-droplet{background:#692b37!important;color:#ffe6e9!important;border-color:#cf5869!important}
+.pipe-card.flow-alert::after{opacity:1!important;box-shadow:inset 0 0 0 1px #f06f80,inset 0 -35px 65px -40px #dc3a5277!important}
+@media(max-width:780px){
+ .title-status{justify-content:flex-start;width:100%}
+ 
+ .records-controls .field{min-width:135px;flex:1}
+ .records-controls .btn{width:100%}
+}
+
+
+/* v9.3 — simplified system status */
+.system-status-only{margin-top:23px}
+.system-status-wrap{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 21px}
+.device-status-large{display:inline-flex;align-items:center;gap:9px;padding:9px 14px;border:1px solid var(--line);border-radius:24px;background:var(--panel2);color:var(--muted)}
+.device-status-large .dot{width:8px;height:8px}
+.device-status-large.online{color:#16886f;background:#e9f8f3;border-color:#bce7d9}
+.device-status-large.online .dot{background:#14a986;box-shadow:0 0 0 4px #14a98616}
+.device-status-large.offline{color:#a36825;background:#fff7eb;border-color:#ead4b6}
+.device-status-large.offline .dot{background:#d48b3d}
+[data-theme="dark"] .device-status-large.online{color:#74e8ce;background:#163b38;border-color:#295d55}
+[data-theme="dark"] .device-status-large.offline{color:#efc26e;background:#45331f;border-color:#6f5532}
+@media(max-width:580px){
+ .system-status-wrap{align-items:flex-start;flex-direction:column}
+ .device-status-large{width:100%;justify-content:center}
+}
+
+
+/* v9.4 — single device connection status only */
+.connection-pill.is-live{color:#16886f;border-color:#bce7d9;background:#e9f8f3}
+.connection-pill.is-offline{color:#a36825;border-color:#ead4b6;background:#fff7eb}
+[data-theme="dark"] .connection-pill.is-live{color:#74e8ce;border-color:#295d55;background:#163b38}
+[data-theme="dark"] .connection-pill.is-offline{color:#efc26e;border-color:#6f5532;background:#45331f}
+
+
+/* v9.5 — detailed system health */
+.system-health-panel{margin-top:23px;overflow:hidden}
+.health-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line)}
+.health-item{padding:16px 18px;min-height:112px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--panel)}
+.health-item:nth-child(3n){border-right:0}
+.health-item:nth-last-child(-n+3){border-bottom:0}
+.health-item-head{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.45px}
+.health-icon{width:26px;height:26px;border:1px solid var(--line);border-radius:8px;display:grid;place-items:center;background:var(--panel2)}
+.health-icon .icon{width:14px;height:14px}
+.health-item>strong{display:block;margin-top:12px;font-size:16px;letter-spacing:-.2px}
+.health-item>small{display:block;margin-top:5px;color:var(--muted);font-size:11px;line-height:1.35}
+.health-item.ok>strong{color:#16886f}
+.health-item.warn>strong{color:#b27327}
+.health-item.bad>strong{color:#c93d52}
+.health-overall.ok{background:linear-gradient(180deg,var(--panel),#edf9f5)}
+.health-overall.warn{background:linear-gradient(180deg,var(--panel),#fff8ed)}
+.health-overall.bad{background:linear-gradient(180deg,var(--panel),#fff1f3)}
+[data-theme="dark"] .health-overall.ok{background:linear-gradient(180deg,var(--panel),#173b36)}
+[data-theme="dark"] .health-overall.warn{background:linear-gradient(180deg,var(--panel),#42321f)}
+[data-theme="dark"] .health-overall.bad{background:linear-gradient(180deg,var(--panel),#45232b)}
+@media(max-width:920px){
+ .health-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .health-item:nth-child(3n){border-right:1px solid var(--line)}
+ .health-item:nth-child(2n){border-right:0}
+ .health-item:nth-last-child(-n+3){border-bottom:1px solid var(--line)}
+ .health-item:nth-last-child(-n+2){border-bottom:0}
+}
+@media(max-width:560px){
+ .health-grid{grid-template-columns:1fr}
+ .health-item,.health-item:nth-child(2n),.health-item:nth-child(3n){border-right:0}
+ .health-item:nth-last-child(-n+2){border-bottom:1px solid var(--line)}
+ .health-item:last-child{border-bottom:0}
+}
+
+
+/* v9.7 — grouped usage-record intervals */
+.interval-heading td{
+  padding:9px 13px!important;
+  background:var(--panel2);
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+}
+.interval-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.35px;
+  color:var(--text);
+  text-transform:uppercase;
+}
+.interval-badge::before{
+  content:'';
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:var(--accent);
+}
+.interval-gap td{
+  height:10px!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+}
+.interval-data-row td{
+  background:var(--panel);
+}
+.interval-data-row:hover td{
+  background:var(--panel2);
+}
 
 </style>
 </head>
@@ -112,128 +418,488 @@
 <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
 <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 3v17h17M8 15v-4m5 4V6m5 9v-6"/></symbol>
 <symbol id="i-file" viewBox="0 0 24 24"><path d="M13 3H5v18h14V9l-6-6Zm0 0v6h6M8 13h8m-8 4h6"/></symbol>
-<symbol id="i-chip" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 3v3m6-3v3M9 18v3m6-3v3M3 9h3m-3 6h3m12-6h3m-3 6h3"/><rect x="10" y="10" width="4" height="4"/></symbol>
+<symbol id="i-chip" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 3v3m6-3v3M9 18v3m6-3v3M3 9h3m-3 6h3m12-6h3m-3 6h3"/><rect x="10" y="10" width="4" height="4"/></symbol><symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3v-4h.1A1.7 1.7 0 0 0 4.7 8.5a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.1A1.7 1.7 0 0 0 15.5 4.7a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.15.36.37.68.65.95.28.27.65.42 1.05.45h.1v4h-.1A1.7 1.7 0 0 0 19.4 15Z"/></symbol>
 <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 15v5h16v-5"/></symbol>
 <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 7a7 7 0 0 1 12-1l2 3M4 15l2 3a7 7 0 0 0 12-1"/></symbol>
 <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 15a8 8 0 0 1-11-11 9 9 0 1 0 11 11Z"/></symbol>
 <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
 <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M2 12h5l3-8 4 16 3-8h5"/></symbol>
+<symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H6.5a4.5 4.5 0 0 1-.7-8.94A6.5 6.5 0 0 1 18.2 8.5 5.25 5.25 0 0 1 17.5 19Z"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-archive" viewBox="0 0 24 24"><path d="M4 7h16v13H4z"/><path d="M3 4h18v3H3z"/><path d="M9 11h6"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></symbol>
 <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M3 8a14 14 0 0 1 18 0M6 12a9 9 0 0 1 12 0m-9 4a4 4 0 0 1 6 0"/><circle cx="12" cy="20" r=".5"/></symbol>
-<symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+
 </defs></svg>
-<aside class="sidebar"><a class="brand" href="#overview" aria-label="DFAB water dashboard"><div class="brand-mark"><svg class="icon"><use href="#i-drop"/></svg></div><div><strong>DFAB</strong><small>WATER INTELLIGENCE</small></div></a><div class="nav-label">WORKSPACE</div><nav aria-label="Main navigation"><a class="nav-item active" href="#overview" title="Overview"><svg class="icon"><use href="#i-grid"/></svg><span>Overview</span><span>8</span></a><a class="nav-item" href="#analysis" title="Usage analytics"><svg class="icon"><use href="#i-chart"/></svg><span>Usage analytics</span></a><a class="nav-item" href="#records" title="Records"><svg class="icon"><use href="#i-file"/></svg><span>Records</span></a><a class="nav-item" href="#system" title="System health"><svg class="icon"><use href="#i-chip"/></svg><span>System health</span></a></nav><div class="nav-foot"><div class="node-label"><svg class="icon"><use href="#i-chip"/></svg>ESP32 · 8 channels</div><p>Terrace water monitoring</p><p style="margin-top:14px;color:#618a99">DFAB Stainless System</p></div></aside>
+<aside class="sidebar"><a class="brand" href="#overview" aria-label="DFAB water dashboard"><div class="brand-mark"><svg class="icon"><use href="#i-drop"/></svg></div><div><strong>DFAB</strong><small>WATER INTELLIGENCE</small></div></a><div class="nav-label">WORKSPACE</div><nav aria-label="Main navigation"><a class="nav-item active" href="#overview" title="Overview"><svg class="icon"><use href="#i-grid"/></svg><span>Overview</span><span>8</span></a><a class="nav-item" href="#analysis" title="Usage analytics"><svg class="icon"><use href="#i-chart"/></svg><span>Usage analytics</span></a><a class="nav-item" href="#records" title="Records"><svg class="icon"><use href="#i-file"/></svg><span>Records</span></a><a class="nav-item" href="#system" title="System health"><svg class="icon"><use href="#i-chip"/></svg><span>System health</span></a><a class="nav-item" href="#settings" title="Settings"><svg class="icon"><use href="#i-settings"/></svg><span>Settings</span></a></nav><div class="nav-foot"><div class="node-label"><svg class="icon"><use href="#i-chip"/></svg>Monitoring Controller · 8 channels</div><p>Water Monitoring System</p><p style="margin-top:14px;color:#618a99">DFAB Stainless Systems</p></div></aside>
 <main class="main" id="overview">
-<div class="topbar"><div class="breadcrumb">Operations <b>/ Water monitoring</b></div><div class="top-actions"><span id="todayStamp" class="date-stamp"></span><button id="testWipe" class="btn test-wipe" type="button"><svg class="icon"><use href="#i-trash"/></svg>Test wipe</button><button id="themeToggle" class="btn icon-btn" aria-label="Switch to dark theme" title="Switch theme"><svg class="icon"><use href="#i-moon"/></svg></button><button id="refresh" class="btn icon-btn" aria-label="Refresh readings" title="Refresh readings"><svg class="icon"><use href="#i-refresh"/></svg></button><button class="btn export-top" data-export><svg class="icon"><use href="#i-download"/></svg>Export report</button></div></div>
-<header class="title-row"><div><h1>Water overview</h1><p>Water flow, consumption and connection health across all eight pipes.</p></div><div id="connectionPill" class="connection-pill" role="status"><span class="dot"></span><span id="connection">Connecting to device…</span></div></header>
-<div id="liveError" class="message" role="status" hidden></div><div id="resetMessage" class="message" role="status" hidden></div>
+<div class="topbar"><div class="breadcrumb">Operations <b>/ Water monitoring</b></div><div class="top-actions"><span id="todayStamp" class="date-stamp"></span><button id="enableAlerts" class="btn alert-enable" type="button" title="Enable Chrome notifications and dashboard buzzer"><svg class="icon"><use href="#i-bell"/></svg><span id="alertEnableText">Enable alerts</span></button><button id="themeToggle" class="btn icon-btn" aria-label="Switch to dark theme" title="Switch theme"><svg class="icon"><use href="#i-moon"/></svg></button><button id="refresh" class="btn icon-btn" aria-label="Refresh readings" title="Refresh readings"><svg class="icon"><use href="#i-refresh"/></svg></button></div></div>
+<header class="title-row"><div><h1>Water overview</h1><p>Live flow, permanent daily history and monthly usage across all eight pipes.</p></div><div class="title-status"><div id="connectionPill" class="connection-pill" role="status"><span class="dot"></span><span id="connection">Device offline</span></div></div></header>
+<div id="liveError" class="message" role="status" hidden></div>
 <section class="summary" aria-label="Live overview">
 <div class="summary-card featured enter"><div class="summary-top"><span>Combined live flow</span><span class="micro-flow" aria-hidden="true"><i></i><i></i><i></i><i></i></span></div><div class="summary-value"><span id="combinedFlow">—</span><em>L/min</em></div><div class="summary-note" id="liveSummaryNote">Waiting for fresh readings</div></div>
 <div class="summary-card enter"><div class="summary-top"><span>Today's consumption</span><svg class="icon"><use href="#i-drop"/></svg></div><div class="summary-value"><span id="todayUsage">—</span><em>L</em></div><div class="summary-note">All pipes · recorded today</div></div>
 <div class="summary-card enter"><div class="summary-top"><span>Pipes flowing</span><svg class="icon"><use href="#i-pulse"/></svg></div><div class="summary-value"><span id="activePipes">—</span><em>/ 8 pipes</em></div><div class="summary-note" id="activeNote">Waiting for device</div></div>
-<div class="summary-card enter"><div class="summary-top"><span>Total metered usage</span><svg class="icon"><use href="#i-chart"/></svg></div><div class="summary-value"><span id="allTime">—</span><em>L</em></div><div class="summary-note">Continuous cumulative · since last manual reset</div></div>
+<div class="summary-card enter"><div class="summary-top"><span id="monthCardTitle">This month usage</span><svg class="icon"><use href="#i-chart"/></svg></div><div class="summary-value"><span id="allTime">—</span><em>L</em></div><div class="summary-note" id="monthSummaryNote">Current calendar month · previous months archived</div></div>
 </section>
 <section aria-labelledby="pipeHeading"><div class="section-heading"><div><h2 id="pipeHeading">Live pipe monitoring</h2><p>Live water streams · speed follows the measured flow</p></div><div class="section-caption"><span class="dot"></span>Refreshes every 2s</div></div><div class="pipe-grid" id="pipeGrid"></div></section>
-<section id="analysis" class="analysis" aria-labelledby="analysisHeading"><div class="section-heading"><div><h2 id="analysisHeading">Consumption insights</h2><p>Explore your recorded water usage</p></div></div>
-<form id="filterForm" class="filter-bar"><div class="field"><label for="pipeFilter">Pipe</label><select id="pipeFilter"><option value="all">All eight pipes</option><option value="1">Pipe 1</option><option value="2">Pipe 2</option><option value="3">Pipe 3</option><option value="4">Pipe 4</option><option value="5">Pipe 5</option><option value="6">Pipe 6</option><option value="7">Pipe 7</option><option value="8">Pipe 8</option></select></div><div class="field"><label for="dateFilter">Date</label><input id="dateFilter" type="date" required></div><button class="btn primary" type="submit">Apply filters<svg class="icon"><use href="#i-arrow"/></svg></button><button class="btn" id="todayButton" type="button">Today</button><div id="filterInfo" class="filter-info"></div></form>
-<div id="historyError" class="message" role="status" hidden></div>
-<div class="analysis-layout"><article class="panel"><div class="panel-head"><div><h3 id="chartTitle">Monthly consumption</h3><p id="chartSubtitle">Recorded litres by day</p></div><div class="segmented" aria-label="Chart period"><button type="button" data-period="day" aria-pressed="false">Day</button><button type="button" data-period="month" aria-pressed="true">Month</button></div></div><div class="chart-wrap"><svg id="usageChart" viewBox="0 0 720 245" role="img" aria-label="Water consumption chart"></svg><div id="chartEmpty" class="empty-chart" hidden><span>No records for this period</span></div></div><div class="chart-footer"><span id="chartTotalLabel">Total month usage</span><strong id="monthUsageValue">— L</strong></div></article>
-<article class="panel"><div class="panel-head"><div><h3>Usage by pipe</h3><p id="compareSubtitle">Selected day · all pipes</p></div><svg class="icon muted"><use href="#i-drop"/></svg></div><div id="comparison" class="comparison"></div></article></div>
-<div class="analysis-stats"><div class="mini-stat"><span>Selected day usage</span><strong id="usage">— L</strong><small>Recorded volume</small></div><div class="mini-stat"><span>Average flow</span><strong id="average">— L/min</strong><small>Weighted by sample duration</small></div><div class="mini-stat"><span>Peak flow</span><strong id="peak">— L/min</strong><small>Highest recorded sample</small></div><div class="mini-stat"><span>Active duration</span><strong id="duration">— min</strong><small>Observed flowing samples</small></div></div>
+<section id="analysis" class="analysis" aria-labelledby="analysisHeading">
+  <div class="section-heading">
+    <div>
+      <h2 id="analysisHeading">Consumption insights</h2>
+      <p>Day, month and year analytics · updates automatically when filters change</p>
+    </div>
+  </div>
+
+  <form id="filterForm" class="filter-bar analytics-filter">
+    <div class="field">
+      <label for="pipeFilter">Pipe</label>
+      <select id="pipeFilter">
+        <option value="all">All eight pipes</option>
+        <option value="1">Pipe 1</option><option value="2">Pipe 2</option>
+        <option value="3">Pipe 3</option><option value="4">Pipe 4</option>
+        <option value="5">Pipe 5</option><option value="6">Pipe 6</option>
+        <option value="7">Pipe 7</option><option value="8">Pipe 8</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="analyticsPeriod">View</label>
+      <select id="analyticsPeriod">
+        <option value="day">Day</option>
+        <option value="month" selected>Month</option>
+        <option value="year">Year</option>
+      </select>
+    </div>
+
+    <div class="field analytics-date-field" data-filter-field="day">
+      <label for="dateFilter">Date</label>
+      <input id="dateFilter" type="date">
+    </div>
+
+    <div class="field" data-filter-field="month">
+      <label for="monthFilter">Month</label>
+      <input id="monthFilter" type="month">
+    </div>
+
+    <div class="field" data-filter-field="year">
+      <label for="yearFilter">Year</label>
+      <select id="yearFilter"></select>
+    </div>
+
+    
+    <button class="btn" id="todayButton" type="button">Today</button>
+    <div id="filterInfo" class="filter-info"></div>
+  </form>
+
+  <div id="historyError" class="message" role="status" hidden></div>
+
+  <div class="analysis-layout">
+    <article class="panel">
+      <div class="panel-head">
+        <div>
+          <h3 id="chartTitle">Monthly consumption</h3>
+          <p id="chartSubtitle">Recorded litres by day</p>
+        </div>
+        <span class="archive-chip">Permanent archive</span>
+      </div>
+      <div class="chart-wrap">
+        <svg id="usageChart" viewBox="0 0 720 245" role="img" aria-label="Water consumption chart"></svg>
+        <div id="chartEmpty" class="empty-chart" hidden><span>No records for this period</span></div>
+      </div>
+      <div class="chart-footer">
+        <span id="chartTotalLabel">Total month usage</span>
+        <strong id="monthUsageValue">0.000 L</strong>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-head">
+        <div>
+          <h3>Usage by pipe</h3>
+          <p id="compareSubtitle">Selected period · all pipes</p>
+        </div>
+        <svg class="icon muted"><use href="#i-drop"/></svg>
+      </div>
+      <div id="comparison" class="comparison"></div>
+    </article>
+  </div>
+
+  <div class="analysis-stats">
+    <div class="mini-stat"><span id="stat1Label">Selected usage</span><strong id="usage">0.000 L</strong><small id="stat1Note">Recorded volume</small></div>
+    <div class="mini-stat"><span id="stat2Label">Average flow</span><strong id="average">0.00 L/min</strong><small id="stat2Note">Recorded samples</small></div>
+    <div class="mini-stat"><span id="stat3Label">Peak flow</span><strong id="peak">0.00 L/min</strong><small id="stat3Note">Highest sample</small></div>
+    <div class="mini-stat"><span id="stat4Label">Active duration</span><strong id="duration">0.0 min</strong><small id="stat4Note">Observed flowing samples</small></div>
+  </div>
 </section>
-<section id="records" class="records panel" aria-labelledby="recordsHeading"><div class="panel-head"><div><h3 id="recordsHeading">Recent readings</h3><p id="recordSummary">Selected date and pipe</p></div><button class="btn" data-export><svg class="icon"><use href="#i-download"/></svg>Download CSV</button></div><div class="table-scroll"><table><thead><tr><th scope="col">Recorded at</th><th scope="col">Pipe</th><th scope="col">Flow · L/min</th><th scope="col">Interval · L</th><th scope="col">Total · L</th><th scope="col">State</th></tr></thead><tbody id="recordBody"><tr><td colspan="6" class="table-empty">Waiting for history…</td></tr></tbody></table></div><div class="table-note" id="historyNote">History is loading. No sample data is displayed.</div></section>
-<section class="panel health-panel" id="system" aria-label="System health"><div class="health-title"><svg class="icon" style="color:var(--accent)"><use href="#i-chip"/></svg><div><h3>System health</h3><span class="small muted">ESP32 · Firebase</span></div></div><div class="health-item">Device last seen<strong id="lastSeen">Waiting for data</strong></div><div class="health-item">Wi-Fi signal<strong id="wifi">—</strong></div><div class="health-item">Data freshness<strong id="freshness">Unknown</strong></div><div class="health-item">Calibration<strong id="calibration">Waiting for device</strong></div><button class="btn danger" id="wipeLogs"><svg class="icon"><use href="#i-trash"/></svg>Wipe logs & totals</button></section>
+<section id="records" class="records panel records-explorer" aria-labelledby="recordsHeading">
+  <div class="panel-head records-head">
+    <div>
+      <h3 id="recordsHeading">Usage records</h3>
+      <p id="recordSummary">Selections refresh automatically</p>
+    </div>
+    <button class="btn primary" id="downloadRecords" type="button"><svg class="icon"><use href="#i-download"/></svg>Download CSV</button>
+  </div>
+
+  <div class="records-controls">
+    <div class="field">
+      <label for="recordsRange">Report type</label>
+      <select id="recordsRange">
+        <option value="today">Today · time range</option>
+        <option value="day">Specific day</option>
+        <option value="month">Month · day-by-day</option>
+        <option value="year">Year · month-by-month</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="recordsPipe">Pipe</label>
+      <select id="recordsPipe">
+        <option value="all">All eight pipes</option>
+        <option value="1">Pipe 1</option><option value="2">Pipe 2</option>
+        <option value="3">Pipe 3</option><option value="4">Pipe 4</option>
+        <option value="5">Pipe 5</option><option value="6">Pipe 6</option>
+        <option value="7">Pipe 7</option><option value="8">Pipe 8</option>
+      </select>
+    </div>
+
+    <div class="field" data-record-field="day">
+      <label for="recordsDate">Date</label>
+      <input id="recordsDate" type="date">
+    </div>
+
+    <div class="field" data-record-field="month">
+      <label for="recordsMonth">Month</label>
+      <input id="recordsMonth" type="month">
+    </div>
+
+    <div class="field" data-record-field="year">
+      <label for="recordsYear">Year</label>
+      <select id="recordsYear"></select>
+    </div>
+
+    <div class="field" data-record-field="time">
+      <label for="recordsStartTime">From</label>
+      <input id="recordsStartTime" type="time" value="00:00">
+    </div>
+
+    <div class="field" data-record-field="time">
+      <label for="recordsEndTime">To</label>
+      <input id="recordsEndTime" type="time" value="23:59">
+    </div>
+
+    
+  </div>
+
+  <div class="records-total-strip">
+    <span id="recordsScope">Current selection</span>
+    <strong id="recordsTotal">0.000 L</strong>
+  </div>
+
+  <div class="table-scroll">
+    <table>
+      <thead id="recordHead"></thead>
+      <tbody id="recordBody"><tr><td class="table-empty">Loading usage records…</td></tr></tbody>
+    </table>
+  </div>
+  <div class="table-note" id="historyNote">Detailed records are grouped by interval for easier review and export. Current totals appear immediately while archived intervals build automatically.</div>
+</section>
+<section id="settings" class="settings-section compact-settings" aria-labelledby="settingsHeading">
+  <div class="section-heading">
+    <div>
+      <h2 id="settingsHeading">Settings</h2>
+      <p>Measurement settings shared by all eight pipes</p>
+    </div>
+    <div id="settingsSaveState" class="section-caption">Cloud data synced</div>
+  </div>
+
+  <article class="panel settings-single-card">
+    <div class="settings-inline-row">
+      <div class="settings-inline-title">
+        <span class="settings-icon"><svg class="icon"><use href="#i-pulse"/></svg></span>
+        <div>
+          <strong>Water measurement</strong>
+          <span>One calibration value for Pipe 1–8</span>
+        </div>
+      </div>
+
+      <div class="inline-setting">
+        <label for="calibrationAll">Calibration</label>
+        <div class="inline-input">
+          <input id="calibrationAll" type="number" min="10" max="2000" step="0.01" value="100">
+          <span>pulses/L</span>
+        </div>
+      </div>
+
+      <div class="inline-setting">
+        <label for="flowAlertMinutes">Flow alert time</label>
+        <div class="inline-input">
+          <input id="flowAlertMinutes" type="number" min="1" max="1440" step="1" value="30">
+          <span>minutes</span>
+        </div>
+      </div>
+
+      <button class="btn primary settings-save-btn" id="saveSettings" type="button">
+        Save settings
+        <svg class="icon"><use href="#i-arrow"/></svg>
+      </button>
+    </div>
+
+    <div class="settings-footnote">
+      Calibration applies to all 8 pipes. Alert time controls the red-card warning. Browser notifications and the dashboard buzzer are enabled separately from the top bar.
+    </div>
+  </article>
+</section>
+<section class="panel system-card system-health-panel" id="system" aria-label="System status">
+  <div class="system-status-wrap">
+    <div class="system-title">
+      <span class="system-icon"><svg class="icon"><use href="#i-chip"/></svg></span>
+      <div>
+        <h3>System status</h3>
+        <p>Connection, network and data-service health</p>
+      </div>
+    </div>
+
+    <div class="device-status-large" id="systemState">
+      <span class="dot"></span>
+      <strong>Checking</strong>
+    </div>
+  </div>
+
+  <div class="health-grid">
+    <article class="health-item">
+      <div class="health-item-head">
+        <span class="health-icon"><svg class="icon"><use href="#i-wifi"/></svg></span>
+        <span>Wi-Fi connection</span>
+      </div>
+      <strong id="healthWifi">Checking</strong>
+      <small id="healthWifiNote">Signal status unavailable</small>
+    </article>
+
+    <article class="health-item">
+      <div class="health-item-head">
+        <span class="health-icon"><svg class="icon"><use href="#i-cloud"/></svg></span>
+        <span>Data service</span>
+      </div>
+      <strong id="healthCloud">Checking</strong>
+      <small id="healthCloudNote">Connection status</small>
+    </article>
+
+    <article class="health-item">
+      <div class="health-item-head">
+        <span class="health-icon"><svg class="icon"><use href="#i-clock"/></svg></span>
+        <span>Last data update</span>
+      </div>
+      <strong id="healthFreshness">Waiting</strong>
+      <small id="healthLastSeen">No data received yet</small>
+    </article>
+
+    <article class="health-item">
+      <div class="health-item-head">
+        <span class="health-icon"><svg class="icon"><use href="#i-archive"/></svg></span>
+        <span>Historical archive</span>
+      </div>
+      <strong id="healthArchive">Checking</strong>
+      <small id="healthArchiveNote">Archive interval unavailable</small>
+    </article>
+
+    <article class="health-item">
+      <div class="health-item-head">
+        <span class="health-icon"><svg class="icon"><use href="#i-refresh"/></svg></span>
+        <span>Data synchronization</span>
+      </div>
+      <strong id="healthSync">Checking</strong>
+      <small id="healthSyncNote">Pending records unavailable</small>
+    </article>
+
+    <article class="health-item health-overall">
+      <div class="health-item-head">
+        <span class="health-icon"><svg class="icon"><use href="#i-pulse"/></svg></span>
+        <span>Overall data health</span>
+      </div>
+      <strong id="healthOverall">Checking</strong>
+      <small id="healthOverallNote">Evaluating system status</small>
+    </article>
+  </div>
+</section>
+
+
 <footer class="footer"><span>DFAB · Water Intelligence</span><span id="timezoneNote"></span></footer>
 </main>
-<dialog class="dialog" id="resetDialog" aria-labelledby="resetTitle"><h2 id="resetTitle">Reset water records?</h2><p>This clears the stored history and resets cumulative litres and pulse counts for <strong>all eight pipes</strong>.</p><p>If the ESP32 is offline, the command will stay queued and run when the device reconnects. Export your records first if you need a copy.</p><div class="dialog-actions"><button class="btn" id="cancelReset">Cancel</button><button class="btn danger" id="confirmReset">Reset all eight pipes</button></div></dialog>
-<dialog class="dialog" id="testWipeDialog" aria-labelledby="testWipeTitle"><span class="test-label">TEMPORARY TEST CONTROL</span><h2 id="testWipeTitle">Clear all water data?</h2><p>This immediately deletes all stored water readings, history and reset records for this dashboard. Charts and totals will start empty.</p><p>The ESP32 counters will reset when it receives the command. If it is offline, the dashboard will wait for its acknowledgement before showing live readings again.</p><p>Download a CSV first if you need the existing records.</p><div class="dialog-actions"><button class="btn" id="cancelTestWipe" type="button">Cancel</button><button class="btn danger" id="confirmTestWipe" type="button">Wipe all water data</button></div></dialog>
+
+
 <dialog class="dialog" id="detailDialog" aria-labelledby="detailTitle"><div class="section-heading"><h2 id="detailTitle">Pipe details</h2><button class="btn icon-btn" id="closeDetails" aria-label="Close pipe details">✕</button></div><div id="detailBody"></div><div class="dialog-actions"><button class="btn primary" id="analyzePipe">View pipe analytics<svg class="icon"><use href="#i-arrow"/></svg></button></div></dialog>
 <div class="toast" role="status" id="toast" hidden></div>
 <script>
 'use strict';
-// Same Firebase paths and ESP32 field names as the supplied dashboard.
-const BASE='https://water-flow-rate-9ce4f-default-rtdb.firebaseio.com';
-const LIVE=`${BASE}/waterFlow/live.json`,HISTORY=`${BASE}/waterFlow/history.json`;
-const RESET_TOKEN=`${BASE}/waterFlow/control/resetToken.json`,RESET_ACK=`${BASE}/waterFlow/control/resetAck.json`;
-const FLOW_THRESHOLD=0.02,ESP_STALE_MS=10000;
-// TEMPORARY TEST CONTROL: set false to remove the Test wipe button later.
-const ENABLE_TEST_WIPE=true;
-let testWipePending=false,dataGeneration=0;
+
+const BASE='https://water-flow-a1bd6-default-rtdb.firebaseio.com';
+const LIVE=`${BASE}/waterFlow/live.json`;
+const CONFIG=`${BASE}/waterFlow/config.json`;
 const PIPE_NOS=[1,2,3,4,5,6,7,8];
 const COLORS=['#00a99a','#36a6d0','#6479ce','#e2a445','#d786aa','#6ca960','#8c7abe','#4a8f9b'];
+const DEFAULT_CALIBRATION=100;
+const ESP_STALE_MS=12000;
 const $=id=>document.getElementById(id);
 const number=v=>Number.isFinite(Number(v))?Number(v):0;
 const nonneg=v=>Math.max(0,number(v));
+const hasNumber=v=>v!==null&&v!==undefined&&Number.isFinite(Number(v));
 const fmt=(v,d=2)=>number(v).toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=name=>`<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
-const localDay=t=>{const d=new Date(t);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
-let history=[],latestLive=null,historyLoaded=false,liveReachable=false,liveBusy=false,historyBusy=false;
-let selectedDate=localDay(Date.now()),selectedPipe='all',period='month',detailPipe=1,resetBusy=false,resetSending=false,pendingReset=null;
-let toastTimer,historyFailure='',lastHistoryFetch=null;
-const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-function message(id,text){$(id).textContent=text;$(id).hidden=!text;}
-function toast(text){clearTimeout(toastTimer);$('toast').textContent=text;$('toast').hidden=false;toastTimer=setTimeout(()=>$('toast').hidden=true,3500);}
-function numeric(id,value,digits=2){const el=$(id);const target=fmt(value,digits);if(el.textContent!==target)el.textContent=target;}
-function isFresh(data=latestLive,now=Date.now()){const t=number(data?.timestamp),age=now-t;return !!data&&data.online!==false&&t>0&&age>=0&&age<=ESP_STALE_MS;}
-function fresh(){return liveReachable&&isFresh();}
-function flowOf(pipe){return nonneg(pipe?.currentFlowLpm??pipe?.flowRate);}
-function hasNumber(v){return v!==null&&v!==undefined&&Number.isFinite(Number(v));}
-function pipeAvailable(pipe){return !!pipe&&(hasNumber(pipe.currentFlowLpm)||hasNumber(pipe.flowRate));}
-function pipeFlowing(pipe){return pipeAvailable(pipe)&&flowOf(pipe)>=FLOW_THRESHOLD;}
 
-// Continuous cumulative-meter protection.
-// Firebase history is the primary ledger. A same-browser local cache is only a
-// last-known fallback if power is lost before the newest live value reaches history.
-const METER_CACHE_KEY='dfab-water-meter-cache-v2';
-let meterCache={};
-try{meterCache=JSON.parse(localStorage.getItem(METER_CACHE_KEY)||'{}')||{};}catch{meterCache={};}
-function saveMeterCache(){try{localStorage.setItem(METER_CACHE_KEY,JSON.stringify(meterCache));}catch{}}
-function clearMeterCache(){meterCache={};try{localStorage.removeItem(METER_CACHE_KEY);}catch{}}
-function historyAnchor(pipeNo){
- for(let n=history.length-1;n>=0;n--){
-  const row=history[n],p=row?.pipes?.[pipeNo];
-  if(hasNumber(p?.meterTotal))return {meter:nonneg(p.meterTotal),raw:hasNumber(p.total)?nonneg(p.total):null,timestamp:number(row.timestamp),source:'firebase'};
- }
+let latestLive=null;
+let liveReachable=false;
+let liveBusy=false;
+let currentDaySummary=null;
+let currentMonthSummary=null;
+let appConfig={calibrationAll:100,continuousFlowAlertMinutes:30};
+let selectedPipe='all';
+let analyticsPeriod='month';
+let analyticsSelection='';
+let analyticsData=null;
+let recordsRows=[];
+let recordMode='today';
+let toastTimer=null;
+let audioContext=null;
+let alertArmed=false;
+let activeAlertPipes=new Set();
+
+function localDay(ts=Date.now()){
+ const d=new Date(ts);
+ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function localMonth(ts=Date.now()){
+ const d=new Date(ts);
+ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+function currentYear(){return new Date().getFullYear();}
+function dateParts(date){
+ const [y,m,d]=date.split('-');
+ return {y,m,d};
+}
+function monthParts(month){
+ const [y,m]=month.split('-');
+ return {y,m};
+}
+function daySummaryUrl(date){
+ const p=dateParts(date);
+ return `${BASE}/waterFlow/dailySummary/${p.y}/${p.m}/${p.d}.json`;
+}
+function monthDailyUrl(month){
+ const p=monthParts(month);
+ return `${BASE}/waterFlow/dailySummary/${p.y}/${p.m}.json`;
+}
+function yearDailyUrl(year){return `${BASE}/waterFlow/dailySummary/${year}.json`;}
+function monthSummaryUrl(month){
+ const p=monthParts(month);
+ return `${BASE}/waterFlow/monthlySummary/${p.y}/${p.m}.json`;
+}
+function yearMonthlyUrl(year){return `${BASE}/waterFlow/monthlySummary/${year}.json`;}
+function historyDayUrl(date){
+ const p=dateParts(date);
+ return `${BASE}/waterFlow/historyByDay/${p.y}/${p.m}/${p.d}.json`;
+}
+
+function toast(text){
+ clearTimeout(toastTimer);
+ const el=$('toast');
+ if(!el)return;
+ el.textContent=text;
+ el.hidden=false;
+ toastTimer=setTimeout(()=>{el.hidden=true;},3500);
+}
+function message(id,text){
+ const el=$(id);
+ if(!el)return;
+ el.textContent=text;
+ el.hidden=!text;
+}
+
+async function request(url,options={}){
+ const controller=new AbortController();
+ const timer=setTimeout(()=>controller.abort(),15000);
+ try{
+  const r=await fetch(url,{cache:'no-store',...options,signal:controller.signal});
+  const text=await r.text();
+  if(!r.ok){
+   let detail='';
+   try{detail=JSON.parse(text)?.error||'';}catch{}
+   throw new Error(`HTTP ${r.status}${detail?` · ${detail}`:''}`);
+  }
+  if(!text)return null;
+  return JSON.parse(text);
+ }finally{clearTimeout(timer);}
+}
+
+function calibrationForPipe(i){
+ return appConfig.calibrationAll>0?appConfig.calibrationAll:DEFAULT_CALIBRATION;
+}
+function litresFromPulses(i,pulses){
+ const cal=calibrationForPipe(i);
+ return cal>0?nonneg(pulses)/cal:0;
+}
+function flowOf(p){return nonneg(p?.currentFlowLpm??p?.flowRate);}
+function pipeAvailable(p){return !!p&&(hasNumber(p.currentFlowLpm)||hasNumber(p.flowRate)||hasNumber(p.totalPulseCount)||hasNumber(p.totalLitres));}
+function isFresh(){
+ const t=number(latestLive?.timestamp);
+ const age=Date.now()-t;
+ return liveReachable&&!!latestLive&&latestLive.online!==false&&t>0&&age>=0&&age<=ESP_STALE_MS;
+}
+function pipeFlowing(p){
+ if(!p)return false;
+ if(p.flowing===true)return true;
+ return flowOf(p)>=0.02;
+}
+function lifetimeForPipe(i){
+ const p=latestLive?.[`pipe${i}`];
+ if(hasNumber(p?.totalPulseCount))return litresFromPulses(i,p.totalPulseCount);
+ if(hasNumber(p?.totalLitres))return nonneg(p.totalLitres);
  return null;
 }
-function cachedAnchor(pipeNo){
- const c=meterCache?.[pipeNo];
- return c&&hasNumber(c.meter)&&hasNumber(c.timestamp)?{meter:nonneg(c.meter),raw:hasNumber(c.raw)?nonneg(c.raw):null,timestamp:number(c.timestamp),source:'cache'}:null;
+function summaryPipeUsage(summary,i){
+ if(!summary)return 0;
+ const pulseKey=`pipe${i}TotalPulses`;
+ const litreKey=`pipe${i}Litres`;
+ if(hasNumber(summary[pulseKey]))return litresFromPulses(i,summary[pulseKey]);
+ if(hasNumber(summary[litreKey]))return nonneg(summary[litreKey]);
+ return 0;
 }
-function continuityState(pipeNo){
- const p=latestLive?.[`pipe${pipeNo}`],liveRaw=hasNumber(p?.totalLitres)?nonneg(p.totalLitres):null,liveStamp=number(latestLive?.timestamp);
- const h=historyAnchor(pipeNo),c=cachedAnchor(pipeNo);
- // Prefer the newest trustworthy anchor. History wins ties because it is shared/cloud data.
- let anchor=!h?c:!c?h:(h.timestamp>=c.timestamp?h:c);
- if(liveRaw===null){return {total:anchor?.meter??null,sessionTotal:null,restarted:false,anchor:anchor?.source||'none'};}
- if(!anchor){return {total:liveRaw,sessionTotal:liveRaw,restarted:false,anchor:'live'};}
- if(liveStamp>0&&liveStamp<anchor.timestamp){return {total:anchor.meter,sessionTotal:liveRaw,restarted:false,anchor:anchor.source};}
- let total=anchor.meter,restarted=false;
- if(hasNumber(anchor.raw)){
-  if(liveRaw+1e-9>=anchor.raw)total+=liveRaw-anchor.raw;
-  else{total+=liveRaw;restarted=true;}
- }else if(liveStamp>anchor.timestamp){
-  // No raw baseline is available, so never guess extra volume and risk double-counting.
-  total=anchor.meter;
- }
- return {total:Math.max(0,total),sessionTotal:liveRaw,restarted,anchor:anchor.source};
+function summaryUsage(summary,nos=PIPE_NOS){
+ return nos.reduce((s,i)=>s+summaryPipeUsage(summary,i),0);
 }
-function continuousTotal(pipeNo){return continuityState(pipeNo).total;}
-function rememberLiveMeters(){
- const stamp=number(latestLive?.timestamp);if(!stamp)return;
- let changed=false;
- for(const i of PIPE_NOS){const p=latestLive?.[`pipe${i}`],raw=hasNumber(p?.totalLitres)?nonneg(p.totalLitres):null,state=continuityState(i);if(raw===null||!hasNumber(state.total))continue;
-  const old=meterCache[i];if(!old||stamp>=number(old.timestamp)){meterCache[i]={meter:nonneg(state.total),raw,timestamp:stamp};changed=true;}
- }
- if(changed)saveMeterCache();
+function selectedNos(pipe=selectedPipe){
+ return pipe==='all'?PIPE_NOS:[Number(pipe)];
 }
-function setTheme(theme){document.documentElement.dataset.theme=theme;$('themeToggle').setAttribute('aria-label',`Switch to ${theme==='dark'?'light':'dark'} theme`);try{localStorage.setItem('dfab-water-theme',theme);}catch{}}
+
+function setTheme(theme){
+ document.documentElement.dataset.theme=theme;
+ $('themeToggle').setAttribute('aria-label',`Switch to ${theme==='dark'?'light':'dark'} theme`);
+ try{localStorage.setItem('dfab-water-theme',theme);}catch{}
+}
 try{setTheme(localStorage.getItem('dfab-water-theme')||'light');}catch{setTheme('light');}
 $('themeToggle').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
 $('todayStamp').textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
-$('dateFilter').value=selectedDate;
-$('timezoneNote').textContent=`Dates use your device timezone · ${Intl.DateTimeFormat().resolvedOptions().timeZone||'Local time'}`;
-$('pipeGrid').innerHTML=PIPE_NOS.map(i=>`<article class="pipe-card enter" id="card${i}"><div class="pipe-head"><div class="pipe-name"><span class="pipe-droplet">${icon('drop')}</span><div><span class="pipe-kicker">FLOW SENSOR · 0${i}</span><strong>Pipe ${i}</strong></div></div><span class="badge" id="badge${i}">Waiting</span></div><div class="flow-scene"><div class="pipe-value"><span class="rate-caption">Instantaneous flow</span><div><span id="flow${i}">—</span><small>L/min</small></div></div><div class="water-stage" aria-hidden="true">
+
+function populateYearSelect(select){
+ const now=currentYear();
+ select.innerHTML='';
+ for(let y=now;y>=2020;y--){
+  const o=document.createElement('option');
+  o.value=String(y);o.textContent=String(y);
+  select.appendChild(o);
+ }
+ select.value=String(now);
+}
+populateYearSelect($('yearFilter'));
+populateYearSelect($('recordsYear'));
+$('dateFilter').value=localDay();
+$('monthFilter').value=localMonth();
+$('recordsDate').value=localDay();
+$('recordsMonth').value=localMonth();
+$('timezoneNote').textContent=`Reporting timezone · Asia/Kolkata (IST)`;
+
+$('pipeGrid').innerHTML=PIPE_NOS.map(i=>`<article class="pipe-card enter" id="card${i}"><div class="pipe-head"><div class="pipe-name"><span class="pipe-droplet">${icon('drop')}</span><div><span class="pipe-kicker">FLOW CHANNEL · 0${i}</span><strong>Pipe ${i}</strong></div></div><span class="badge" id="badge${i}">Waiting</span></div><div class="flow-scene"><div class="pipe-value"><span class="rate-caption">Instantaneous flow</span><div><span id="flow${i}">0.00</span><small>L/min</small></div></div><div class="water-stage" aria-hidden="true">
   <div class="water-light"></div>
   <div class="water-waves back"><svg viewBox="0 0 400 64" preserveAspectRatio="none"><path d="M0 22 Q25 8 50 22 T100 22 T150 22 T200 22 T250 22 T300 22 T350 22 T400 22 V64 H0Z"/></svg></div>
   <div class="water-waves front"><svg viewBox="0 0 400 64" preserveAspectRatio="none"><path d="M0 30 Q25 15 50 30 T100 30 T150 30 T200 30 T250 30 T300 30 T350 30 T400 30 V64 H0Z"/></svg></div>
@@ -241,181 +907,903 @@ $('pipeGrid').innerHTML=PIPE_NOS.map(i=>`<article class="pipe-card enter" id="ca
   <div class="water-particles">${Array.from({length:7},(_,j)=>`<i style="--particle:${j};--depth:${18+(j*13)%64}%"></i>`).join('')}</div>
   <div class="stream-direction"><span>›</span><span>›</span><span>›</span></div>
   <div class="still-water"></div>
-</div></div><div class="pipe-bottom"><div class="pipe-metrics"><div><span>Total usage</span><strong id="total${i}">— L</strong></div><div><span>At this rate</span><strong id="hour${i}">— L/h</strong></div></div><button class="pipe-link" data-detail="${i}"><span>Pulse count & calibration</span>${icon('arrow')}</button></div></article>`).join('');
-function renderLive(){
- const online=fresh();let sum=0,active=0,known=0,total=0,totalKnown=0,restartSafePipes=0;
- document.body.classList.toggle('is-live',online);
- $('connectionPill').className=`connection-pill ${online?'is-live':'is-offline'}`;
- $('connection').textContent=online?'Device online · live':latestLive?(liveReachable?'Device offline · stale data':'Connection unavailable'):(liveReachable?'No device readings':'Connecting / unavailable');
- for(const i of PIPE_NOS){const p=latestLive?.[`pipe${i}`],valid=online&&pipeAvailable(p),flow=flowOf(p),running=valid&&pipeFlowing(p),continuity=continuityState(i);if(valid){sum+=flow;known++;if(running)active++;}
-  if(hasNumber(continuity.total)){total+=nonneg(continuity.total);totalKnown++;}
-  if(continuity.restarted)restartSafePipes++;
-  $('card'+i).classList.toggle('flowing',running);$('card'+i).style.setProperty('--speed',`${Math.max(.4,2.4/(1+Math.min(flow,100)/5))}s`);
-  $('flow'+i).textContent=valid?fmt(flow):'—';$('total'+i).textContent=hasNumber(continuity.total)?`${fmt(nonneg(continuity.total),3)} L`:'— L';$('hour'+i).textContent=valid?`${fmt(flow*60)} L/h`:'— L/h';$('badge'+i).textContent=valid?(running?'Flowing':'No flow'):(online?'Unavailable':latestLive?'Offline':'Waiting');
+</div></div><div class="pipe-bottom"><div class="pipe-metrics"><div><span>Total usage</span><strong id="total${i}">0.000 L</strong></div><div><span>At this rate</span><strong id="hour${i}">0.00 L/h</strong></div></div><button class="pipe-link" data-detail="${i}"><span>Measurement details</span>${icon('arrow')}</button></div></article>`).join('');
+
+async function fetchConfig(){
+ try{
+  const cfg=await request(`${CONFIG}?t=${Date.now()}`);
+  if(cfg&&typeof cfg==='object'){
+   const candidates=PIPE_NOS.map(i=>number(cfg[`calibrationPipe${i}`])).filter(v=>v>0);
+   const cal=number(cfg.calibrationAll)>0?number(cfg.calibrationAll):(candidates[0]||100);
+   const alert=number(cfg.continuousFlowAlertMinutes)||30;
+   if(cal>=10&&cal<=2000)appConfig.calibrationAll=cal;
+   if(alert>=1&&alert<=1440)appConfig.continuousFlowAlertMinutes=Math.round(alert);
+   try{localStorage.setItem('dfab-water-settings-v9',JSON.stringify(appConfig));}catch{}
+   $('settingsSaveState').textContent='Cloud data synced';
+  }
+ }catch{
+  try{
+   const c=JSON.parse(localStorage.getItem('dfab-water-settings-v9')||'null');
+   if(c)appConfig={...appConfig,...c};
+  }catch{}
+  $('settingsSaveState').textContent='Using saved configuration';
  }
- $('combinedFlow').textContent=online&&known?fmt(sum):'—';$('activePipes').textContent=online&&known?String(active):'—';$('allTime').textContent=totalKnown?fmt(total,3):'—';
- $('liveSummaryNote').textContent=online?`${known} of 8 channels reporting${restartSafePipes?' · power-restart continuity active':''}`:'Live flow unavailable · last cumulative totals retained';$('activeNote').textContent=online?`${known-active} idle · ${8-known} unavailable`:'Flow animations paused';
- const stamp=number(latestLive?.timestamp),age=Math.max(0,Date.now()-stamp);
- $('lastSeen').textContent=stamp?new Date(stamp).toLocaleString('en-GB'):'Waiting for data';
- $('freshness').textContent=stamp?(age<60000?`${Math.floor(age/1000)} seconds ago`:`${Math.floor(age/60000)} minutes ago`):'Unknown';
- const signal=latestLive?.wifiSignalDbm;$('wifi').textContent=hasNumber(signal)?`${number(signal)} dBm${online?'':' · last recorded'}`:'Unavailable';
- const calibrations=PIPE_NOS.map(i=>latestLive?.[`pipe${i}`]?.pulsesPerLitre).filter(v=>hasNumber(v)&&number(v)>0);
- $('calibration').textContent=calibrations.length===8&&calibrations.every(v=>number(v)===number(calibrations[0]))?`${fmt(calibrations[0],0)} pulses / litre`:calibrations.length?'Per-pipe calibration':'Unavailable';
- if(!testWipePending)rememberLiveMeters();
- if(testWipePending){$('connection').textContent='Data cleared · device reset pending';$('liveSummaryNote').textContent='Waiting for ESP32 reset acknowledgement';$('activeNote').textContent='New measurements resume after reset';for(const i of PIPE_NOS)$('badge'+i).textContent='Resetting';}
+ $('calibrationAll').value=appConfig.calibrationAll;
+ $('flowAlertMinutes').value=appConfig.continuousFlowAlertMinutes;
+}
+
+async function saveSettings(){
+ const cal=Number($('calibrationAll').value);
+ const alert=Number($('flowAlertMinutes').value);
+ if(!Number.isFinite(cal)||cal<10||cal>2000){toast('Calibration must be 10–2000 pulses/L.');return;}
+ if(!Number.isFinite(alert)||alert<1||alert>1440){toast('Alert time must be 1–1440 minutes.');return;}
+ const payload={calibrationAll:cal,continuousFlowAlertMinutes:Math.round(alert),updatedAt:{'.sv':'timestamp'}};
+ for(const i of PIPE_NOS)payload[`calibrationPipe${i}`]=cal;
+ $('saveSettings').disabled=true;$('settingsSaveState').textContent='Saving…';
+ try{
+  await request(CONFIG,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  appConfig.calibrationAll=cal;appConfig.continuousFlowAlertMinutes=Math.round(alert);
+  try{localStorage.setItem('dfab-water-settings-v9',JSON.stringify(appConfig));}catch{}
+  $('settingsSaveState').textContent='Saved · controller syncs automatically';
+  toast('Calibration and alert time saved.');
+  renderLive();
+ }catch(e){
+  $('settingsSaveState').textContent='Save failed';
+  toast(`Settings save failed: ${e.message}`);
+ }finally{$('saveSettings').disabled=false;}
+}
+$('saveSettings').addEventListener('click',saveSettings);
+
+async function fetchCurrentSummaries(){
+ const day=localDay(),month=localMonth();
+ const [d,m]=await Promise.allSettled([request(`${daySummaryUrl(day)}?t=${Date.now()}`),request(`${monthSummaryUrl(month)}?t=${Date.now()}`)]);
+ if(d.status==='fulfilled')currentDaySummary=d.value;
+ if(m.status==='fulfilled')currentMonthSummary=m.value;
+ renderLive();
+}
+
+async function fetchLive(){
+ if(liveBusy)return;
+ liveBusy=true;
+ try{
+  latestLive=await request(`${LIVE}?t=${Date.now()}`);
+  liveReachable=true;
+  message('liveError',latestLive?'':'Cloud Storage connected. Waiting for the monitoring controller to publish live data.');
+ }catch(e){
+  liveReachable=false;
+  message('liveError',`Live data service unavailable (${e.name==='AbortError'?'request timed out':e.message}). Last loaded values remain on screen.`);
+ }finally{liveBusy=false;renderLive();}
+}
+
+
+function currentTodayPipeUsage(i){
+ if(currentDaySummary){
+   const v=summaryPipeUsage(currentDaySummary,i);
+   if(v>0 || hasNumber(currentDaySummary[`pipe${i}TotalPulses`]) || hasNumber(currentDaySummary[`pipe${i}Litres`])) return v;
+ }
+ const p=latestLive?.[`pipe${i}`];
+ if(hasNumber(p?.todayPulseCount))return litresFromPulses(i,p.todayPulseCount);
+ if(hasNumber(p?.todayLitres))return nonneg(p.todayLitres);
+ return 0;
+}
+
+function currentTodayUsage(){
+ if(currentDaySummary)return summaryUsage(currentDaySummary);
+ if(latestLive){
+  if(hasNumber(latestLive.todayCombinedLitres))return nonneg(latestLive.todayCombinedLitres);
+  return PIPE_NOS.reduce((s,i)=>{
+   const p=latestLive[`pipe${i}`];
+   return s+(hasNumber(p?.todayPulseCount)?litresFromPulses(i,p.todayPulseCount):nonneg(p?.todayLitres));
+  },0);
+ }
+ return 0;
+}
+function currentMonthUsage(){
+ if(currentMonthSummary)return summaryUsage(currentMonthSummary);
+ if(latestLive){
+  if(hasNumber(latestLive.monthCombinedLitres))return nonneg(latestLive.monthCombinedLitres);
+  return PIPE_NOS.reduce((s,i)=>{
+   const p=latestLive[`pipe${i}`];
+   return s+(hasNumber(p?.monthPulseCount)?litresFromPulses(i,p.monthPulseCount):nonneg(p?.monthLitres));
+  },0);
+ }
+ return 0;
+}
+
+
+function setHealthState(id,state){
+ const el=$(id)?.closest('.health-item');
+ if(!el)return;
+ el.classList.remove('ok','warn','bad');
+ if(state)el.classList.add(state);
+}
+function wifiQuality(dbm){
+ if(!Number.isFinite(dbm))return {label:'Unavailable',note:'No signal reading received',state:'warn'};
+ if(dbm>=-55)return {label:'Excellent',note:`${dbm} dBm · strong connection`,state:'ok'};
+ if(dbm>=-67)return {label:'Good',note:`${dbm} dBm · stable connection`,state:'ok'};
+ if(dbm>=-75)return {label:'Fair',note:`${dbm} dBm · usable signal`,state:'warn'};
+ return {label:'Weak',note:`${dbm} dBm · connection may be unstable`,state:'bad'};
+}
+function renderSystemHealth(fresh){
+ const stamp=number(latestLive?.timestamp);
+ const age=stamp?Math.max(0,Date.now()-stamp):null;
+ const wifiDbm=hasNumber(latestLive?.wifiSignalDbm)?number(latestLive.wifiSignalDbm):NaN;
+ const wifi=wifiQuality(wifiDbm);
+ const queued=hasNumber(latestLive?.offlineQueuedRecords)?Math.max(0,Math.round(number(latestLive.offlineQueuedRecords))):null;
+ const archiveSec=hasNumber(latestLive?.archiveIntervalSeconds)?Math.max(0,number(latestLive.archiveIntervalSeconds)):null;
+
+ $('healthWifi').textContent=fresh?wifi.label:'Disconnected';
+ $('healthWifiNote').textContent=fresh?wifi.note:(hasNumber(latestLive?.wifiSignalDbm)?`${wifiDbm} dBm · last recorded signal`:'Controller is not currently connected');
+ setHealthState('healthWifi',fresh?wifi.state:'bad');
+
+ $('healthCloud').textContent=liveReachable?'Connected':'Unavailable';
+ $('healthCloudNote').textContent=liveReachable?'Live data endpoint is responding':'Dashboard cannot reach the data service';
+ setHealthState('healthCloud',liveReachable?'ok':'bad');
+
+ if(stamp){
+   const seconds=Math.floor(age/1000);
+   $('healthFreshness').textContent=age<=ESP_STALE_MS?'Live':age<60000?`${seconds}s old`:`${Math.floor(age/60000)}m old`;
+   $('healthLastSeen').textContent=new Date(stamp).toLocaleString('en-GB');
+   setHealthState('healthFreshness',age<=ESP_STALE_MS?'ok':age<60000?'warn':'bad');
+ }else{
+   $('healthFreshness').textContent='Waiting';
+   $('healthLastSeen').textContent='No timestamp received yet';
+   setHealthState('healthFreshness','warn');
+ }
+
+ if(archiveSec){
+   const mins=archiveSec/60;
+   $('healthArchive').textContent='Active';
+   $('healthArchiveNote').textContent=`Permanent archive every ${Number.isInteger(mins)?mins:fmt(mins,1)} minutes`;
+   setHealthState('healthArchive','ok');
+ }else if(latestLive){
+   $('healthArchive').textContent='Unknown';
+   $('healthArchiveNote').textContent='Archive interval not reported';
+   setHealthState('healthArchive','warn');
+ }else{
+   $('healthArchive').textContent='Waiting';
+   $('healthArchiveNote').textContent='No archive status received';
+   setHealthState('healthArchive','warn');
+ }
+
+ if(queued===null){
+   $('healthSync').textContent='Unknown';
+   $('healthSyncNote').textContent='Pending-record count not reported';
+   setHealthState('healthSync','warn');
+ }else if(queued===0){
+   $('healthSync').textContent='Synchronized';
+   $('healthSyncNote').textContent='No pending offline records';
+   setHealthState('healthSync','ok');
+ }else{
+   $('healthSync').textContent='Pending';
+   $('healthSyncNote').textContent=`${queued} archived record${queued===1?'':'s'} waiting to synchronize`;
+   setHealthState('healthSync',queued<=5?'warn':'bad');
+ }
+
+ let overall='ok',overallText='Healthy',overallNote='Connection and data services operating normally';
+ if(!liveReachable||!fresh){
+   overall='bad';overallText='Attention required';
+   overallNote=!liveReachable?'Data service is currently unreachable':'Live controller data is stale or offline';
+ }else if(wifi.state!=='ok'||(queued!==null&&queued>0)){
+   overall='warn';overallText='Operational';
+   overallNote=wifi.state!=='ok'?'System is running, but network signal needs attention':'System is running while queued records synchronize';
+ }
+ $('healthOverall').textContent=overallText;
+ $('healthOverallNote').textContent=overallNote;
+ setHealthState('healthOverall',overall);
+}
+
+function renderLive(){
+ const fresh=isFresh();
+ let liveSum=0,active=0,availableCount=0,lifetime=0,lifetimeKnown=0;
+ const alerting=[];
+
+ document.body.classList.toggle('is-live',fresh);
+ $('connectionPill').className=`connection-pill ${fresh?'is-live':'is-offline'}`;
+ $('connection').textContent=fresh?'Device online':'Device offline';
+
+ for(const i of PIPE_NOS){
+  const p=latestLive?.[`pipe${i}`];
+  const available=pipeAvailable(p);
+  const flow=flowOf(p);
+  const running=fresh&&available&&pipeFlowing(p);
+  const continuous=nonneg(p?.continuousFlowSeconds);
+  const alert=fresh&&running&&(p?.continuousFlowAlert===true||continuous>=appConfig.continuousFlowAlertMinutes*60);
+  const life=lifetimeForPipe(i);
+
+  if(available){availableCount++;liveSum+=flow;if(fresh&&pipeFlowing(p))active++;}
+  if(hasNumber(life)){lifetime+=life;lifetimeKnown++;}
+  if(alert)alerting.push(i);
+
+  const card=$(`card${i}`);
+  card.classList.toggle('flowing',running);
+  card.classList.toggle('flow-alert',alert);
+  card.classList.toggle('stale-reading',available&&!fresh);
+  card.style.setProperty('--speed',`${Math.max(.4,2.4/(1+Math.min(flow,100)/5))}s`);
+
+  $(`flow${i}`).textContent=available?fmt(flow):'0.00';
+  $(`total${i}`).textContent=hasNumber(life)?`${fmt(life,3)} L`:'0.000 L';
+  $(`hour${i}`).textContent=available?`${fmt(flow*60)} L/h`:'0.00 L/h';
+
+  const mins=Math.floor(continuous/60);
+  $(`badge${i}`).textContent=alert?`ALERT · ${mins}m`:running?(mins?`Flowing · ${mins}m`:'Flowing'):available?(fresh?'No flow':'Last reading'):'Waiting';
+ }
+
+ $('combinedFlow').textContent=availableCount?fmt(liveSum):'0.00';
+ $('activePipes').textContent=fresh?String(active):'0';
+ $('todayUsage').textContent=fmt(currentTodayUsage(),3);
+ $('allTime').textContent=fmt(currentMonthUsage(),3);
+
+ const monthName=new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+ $('monthCardTitle').textContent=`This month usage`;
+ $('monthSummaryNote').textContent=`${monthName} total · previous months archived`;
+ $('liveSummaryNote').textContent=fresh?`${availableCount} of 8 channels reporting`:(latestLive?'Last recorded readings shown · live animation paused':'Waiting for Monitoring Controller readings');
+ $('activeNote').textContent=fresh?`${active} flowing · ${8-active} not flowing`:'Live flow state not confirmed';
+
+ const sys=$('systemState');
+ sys.className=`system-state ${fresh?'online':'offline'}`;
+ sys.innerHTML=`<span class="dot"></span><strong>${fresh?'Device online':'Device offline'}</strong>`;
+
+ renderSystemHealth(fresh);
+
+ updateAlertSystem(alerting);
+ checkDailyMilestone(currentTodayUsage());
  if($('detailDialog').open)renderDetail();
 }
-async function request(url,options={}){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);try{const response=await fetch(url,{cache:'no-store',...options,signal:controller.signal});if(!response.ok)throw new Error(`HTTP ${response.status}`);return await response.json();}finally{clearTimeout(timer);}}
-async function fetchLive(){if(liveBusy||testWipePending)return;const generation=dataGeneration;liveBusy=true;try{const result=await request(`${LIVE}?t=${Date.now()}`);if(generation!==dataGeneration||testWipePending)return;latestLive=result;liveReachable=true;message('liveError',latestLive?'':'No readings are stored yet. Power the ESP32 and connect it to Wi-Fi.');}catch(e){liveReachable=false;message('liveError',`Live connection unavailable (${e.name==='AbortError'?'request timed out':e.message}). Check internet access and Firebase permissions. Saved totals remain visible.`);}finally{liveBusy=false;renderLive();}}
-// Normalize interval volume once across the full chronological history.
-// Legacy cumulative counters use the previous record, never the day's first total.
-function normalize(raw){
- const entries=raw&&typeof raw==='object'?Object.entries(raw):[];
- const sorted=entries.filter(([,v])=>v&&typeof v==='object'&&number(v.timestamp)>0).sort((a,b)=>number(a[1].timestamp)-number(b[1].timestamp));
- const previousRaw=Array(9).fill(null),meter=Array(9).fill(0),meterSeen=Array(9).fill(false);let previousTime=null;
- return sorted.map(([key,v])=>{
-  const stamp=number(v.timestamp),gap=previousTime===null?0:Math.max(0,(stamp-previousTime)/1000);previousTime=stamp;
-  const declared=hasNumber(v.historyIntervalSeconds)?nonneg(v.historyIntervalSeconds):5;
-  // Offline time is never interpolated by the dashboard. Backfilled records from the ESP
-  // are sorted by their stored timestamp and handled normally when they arrive.
-  const seconds=gap>0?Math.min(gap,declared,30):Math.min(declared,30);
-  const pipes={};for(const i of PIPE_NOS){
-   const tf=`pipe${i}TotalLitres`,iv=`pipe${i}IntervalLitres`,fv=v[`pipe${i}CurrentFlowLpm`]??v[`pipe${i}FlowRate`];
-   const total=hasNumber(v[tf])?nonneg(v[tf]):null,explicit=hasNumber(v[iv]);let litres=null,restarted=false;
-   if(explicit)litres=nonneg(v[iv]);
-   else if(total!==null&&previousRaw[i]!==null)litres=total+1e-9>=previousRaw[i]?Math.max(0,total-previousRaw[i]):total;
 
-   if(total!==null){
-    if(previousRaw[i]===null){meter[i]=total;meterSeen[i]=true;}
-    else if(total+1e-9>=previousRaw[i])meter[i]+=Math.max(0,total-previousRaw[i]);
-    else{meter[i]+=total;restarted=true;}
-    previousRaw[i]=total;
-   }else if(explicit&&meterSeen[i])meter[i]+=litres;
+/* ===== Notifications + dashboard buzzer ===== */
+function notificationSupported(){return 'Notification' in window;}
+async function enableAlerts(){
+ alertArmed=true;
+ if(window.AudioContext||window.webkitAudioContext){
+  try{
+   audioContext=audioContext||new (window.AudioContext||window.webkitAudioContext)();
+   await audioContext.resume();
+  }catch{}
+ }
+ if(notificationSupported()){
+  try{await Notification.requestPermission();}catch{}
+ }
+ try{localStorage.setItem('dfab-alerts-enabled','1');}catch{}
+ updateAlertButton();
+ toast(notificationSupported()&&Notification.permission==='granted'?'Alerts enabled.':'Dashboard buzzer enabled. Chrome notifications require permission/HTTPS.');
+}
+function updateAlertButton(){
+ const enabled=alertArmed||localStorage.getItem('dfab-alerts-enabled')==='1';
+ alertArmed=enabled;
+ $('enableAlerts').classList.toggle('enabled',enabled);
+ $('alertEnableText').textContent=enabled?'Alerts enabled':'Enable alerts';
+}
+$('enableAlerts').addEventListener('click',enableAlerts);
+updateAlertButton();
 
-   pipes[i]={flow:hasNumber(fv)?nonneg(fv):null,total,meterTotal:meterSeen[i]?meter[i]:null,litres,source:explicit?'interval':litres===null?'unknown':restarted?'counter restart':'counter delta',restarted};
-  }
-  return {key,timestamp:stamp,seconds,pipes};
- });
-}
-async function fetchHistory(){if(historyBusy||testWipePending)return;const generation=dataGeneration;historyBusy=true;try{const result=await request(`${HISTORY}?t=${Date.now()}`);if(generation!==dataGeneration||testWipePending)return;history=normalize(result);historyLoaded=true;historyFailure='';lastHistoryFetch=Date.now();message('historyError','');renderAnalysis();}catch(e){historyFailure=`History unavailable (${e.name==='AbortError'?'request timed out':e.message}). ${historyLoaded?'Showing the last loaded records.':'No usage figures can be calculated yet.'}`;message('historyError',historyFailure);}finally{historyBusy=false;}}
-function dayRange(date){const start=new Date(`${date}T00:00:00`),end=new Date(start);end.setDate(end.getDate()+1);return [start.getTime(),end.getTime()];}
-function selectedNos(){return selectedPipe==='all'?PIPE_NOS:[Number(selectedPipe)];}
-function selectedRows(){const [a,b]=dayRange(selectedDate);return history.filter(r=>r.timestamp>=a&&r.timestamp<b);}
-function usage(rows,nos){return rows.reduce((sum,r)=>sum+nos.reduce((s,i)=>s+nonneg(r.pipes[i]?.litres),0),0);}
-function sampleStats(rows,nos){let weight=0,weighted=0,peak=0,active=0;for(const r of rows){const vals=nos.map(i=>r.pipes[i]?.flow);if(vals.some(v=>v===null||v===undefined))continue;const f=vals.reduce((s,v)=>s+v,0);weight+=r.seconds;weighted+=f*r.seconds;peak=Math.max(peak,f);if(f>=FLOW_THRESHOLD)active+=r.seconds;}return {average:weight?weighted/weight:null,peak:weight?peak:null,minutes:weight?active/60:null};}
-function niceMax(v){if(v<=0)return 10;const magnitude=10**Math.floor(Math.log10(v));return Math.ceil(v/magnitude/2)*2*magnitude;}
-function drawChart(buckets,labels,hasRows){
- const width=720,height=245,left=57,right=12,top=18,bottom=38,plotW=width-left-right,plotH=height-top-bottom,max=niceMax(Math.max(0,...buckets));
- let svg=`<title>${esc($('chartTitle').textContent)} in litres</title>`;
- for(let k=0;k<=4;k++){const y=top+plotH-k*plotH/4,value=max*k/4;svg+=`<line x1="${left}" x2="${width-right}" y1="${y}" y2="${y}" stroke="var(--chart-grid)" stroke-dasharray="3 5"/><text x="${left-10}" y="${y+4}" text-anchor="end">${value>=1000?`${fmt(value/1000,1)}k`:fmt(value,value<1&&value>0?2:1).replace(/\.0$/,'')}</text>`;}
- const step=plotW/buckets.length,barW=Math.max(3,step*.58);
- buckets.forEach((v,i)=>{const x=left+i*step+(step-barW)/2,h=plotH*v/max,y=top+plotH-h;
- if(v>0)svg+=`<rect class="bar" x="${x}" y="${y}" width="${barW}" height="${h}" rx="3" tabindex="0" role="img" aria-label="${esc(labels[i])}: ${fmt(v,3)} litres"><title>${esc(labels[i])}: ${fmt(v,3)} L</title></rect>`;
- if(i===0||i===buckets.length-1||i%(buckets.length>24?5:4)===0)svg+=`<text x="${left+i*step+step/2}" y="${height-13}" text-anchor="middle">${esc(period==='month'?String(i+1):`${String(i).padStart(2,'0')}:00`)}</text>`;
- });
- $('usageChart').innerHTML=svg;$('chartEmpty').hidden=hasRows;
-}
-function renderAnalysis(){
- const rows=selectedRows(),nos=selectedNos(),date=new Date(`${selectedDate}T00:00:00`),dayLabel=date.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
- $('filterInfo').textContent=`${selectedPipe==='all'?'All pipes':`Pipe ${selectedPipe}`} · ${dayLabel}`;
- const todayRows=history.filter(r=>localDay(r.timestamp)===localDay(Date.now()));$('todayUsage').textContent=historyLoaded?fmt(usage(todayRows,PIPE_NOS),3):'—';
- const stats=sampleStats(rows,nos),dayUsage=usage(rows,nos);$('usage').textContent=historyLoaded?`${fmt(dayUsage,3)} L`:'— L';$('average').textContent=stats.average===null?'— L/min':`${fmt(stats.average)} L/min`;$('peak').textContent=stats.peak===null?'— L/min':`${fmt(stats.peak)} L/min`;$('duration').textContent=stats.minutes===null?'— min':`${fmt(stats.minutes,1)} min`;
- const monthRows=history.filter(r=>{const d=new Date(r.timestamp);return d.getFullYear()===date.getFullYear()&&d.getMonth()===date.getMonth();});
- const chartRows=period==='month'?monthRows:rows,count=period==='month'?new Date(date.getFullYear(),date.getMonth()+1,0).getDate():24;
- const buckets=Array(count).fill(0);for(const r of chartRows){const d=new Date(r.timestamp),idx=period==='month'?d.getDate()-1:d.getHours();buckets[idx]+=usage([r],nos);}
- const labels=buckets.map((_,i)=>period==='month'?`${i+1} ${date.toLocaleDateString('en-GB',{month:'short'})}`:`${String(i).padStart(2,'0')}:00–${String(i+1).padStart(2,'0')}:00`);
- $('chartTitle').textContent=period==='month'?'Monthly consumption':'Daily consumption';$('chartSubtitle').textContent=period==='month'?`${date.toLocaleDateString('en-GB',{month:'long',year:'numeric'})} · litres by day`:`${dayLabel} · litres by hour`;
- $('chartTotalLabel').textContent=period==='month'?'Total month usage':'Total day usage';$('monthUsageValue').textContent=historyLoaded?`${fmt(usage(chartRows,nos),3)} L`:'— L';drawChart(buckets,labels,chartRows.length>0);
- const usagePerPipe=PIPE_NOS.map(i=>usage(rows,[i])),sum=usagePerPipe.reduce((a,b)=>a+b,0);
- $('compareSubtitle').textContent=`${dayLabel} · all pipes`;
- $('comparison').innerHTML=PIPE_NOS.map((i,j)=>`<div><div class="compare-top"><span><i class="swatch" style="background:${COLORS[j]}"></i>Pipe ${i}</span><span>${historyLoaded?`${fmt(usagePerPipe[j],2)} L`:'—'}</span></div><div class="track"><div style="width:${sum?usagePerPipe[j]/sum*100:0}%;background:${COLORS[j]}"></div></div></div>`).join('');
- renderRecords(rows,nos);
-}
-function recordList(rows,nos){return rows.flatMap(r=>nos.filter(i=>r.pipes[i].flow!==null||r.pipes[i].total!==null||r.pipes[i].litres!==null).map(i=>({timestamp:r.timestamp,pipe:i,...r.pipes[i]})));}
-function renderRecords(rows,nos){const records=recordList(rows,nos),latest=records.slice().reverse().slice(0,24);$('recordSummary').textContent=`${records.length.toLocaleString()} pipe readings · latest ${Math.min(records.length,24)} shown`;
- $('recordBody').innerHTML=latest.length?latest.map(r=>`<tr><td>${esc(new Date(r.timestamp).toLocaleTimeString('en-GB'))}</td><td>Pipe ${r.pipe}</td><td>${r.flow===null?'—':fmt(r.flow)}</td><td>${r.litres===null?'—':fmt(r.litres,4)}</td><td>${r.meterTotal===null?'—':fmt(r.meterTotal,3)}</td><td><span class="badge" style="${r.flow>=FLOW_THRESHOLD?'color:var(--accent);background:var(--tint)':''}">${r.flow===null?'Unknown':r.flow>=FLOW_THRESHOLD?'Flowing':'No flow'}</span></td></tr>`).join(''):`<tr><td colspan="6" class="table-empty">${historyLoaded?'No records for this date. Try another date or wait for the ESP32 to upload.':'Waiting for history…'}</td></tr>`;
- const unknown=rows.some(r=>nos.some(i=>r.pipes[i].source==='unknown'));
- $('historyNote').textContent=`${unknown?'Some older records have no interval volume or earlier counter baseline; unmeasurable usage is excluded. ':''}History totals are reconstructed as one continuous meter across ESP32 restarts. Backfilled offline records remain in timestamp order. Active duration uses recorded samples only; missing powerless periods are never estimated. CSV includes every matching reading.`;
-}
-function exportCSV(){if(!historyLoaded){toast('History is not available yet.');return;}const list=recordList(selectedRows(),selectedNos());if(!list.length){toast('No records to export for the selected date.');return;}
- const rows=[['Timestamp (ISO)','Local time','Pipe','Flow (L/min)','Interval usage (L)','Continuous cumulative total (L)','ESP session total (L)','Volume source']];
- for(const r of list)rows.push([new Date(r.timestamp).toISOString(),new Date(r.timestamp).toLocaleString('en-GB'),r.pipe,r.flow??'',r.litres??'',r.meterTotal??'',r.total??'',r.source]);
- const csv='\uFEFF'+rows.map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`DFAB-water-${selectedDate}-${selectedPipe==='all'?'all-pipes':`pipe-${selectedPipe}`}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toast(`Exported ${list.length.toLocaleString()} readings.`);
-}
-function renderDetail(){const i=detailPipe,p=latestLive?.[`pipe${i}`],online=fresh()&&pipeAvailable(p),cal=number(p?.pulsesPerLitre),pulses=p?.totalPulseCount,continuity=continuityState(i);
- $('detailTitle').textContent=`Pipe ${i} details`;
- $('detailBody').innerHTML=`<p>${online?'Live device readings':'Last recorded values · device data is unavailable or stale'}</p><dl class="details"><div><dt>Current flow</dt><dd>${online?fmt(flowOf(p)):'—'} L/min</dd></div><div><dt>Continuous total</dt><dd>${hasNumber(continuity.total)?fmt(continuity.total,3):'—'} L</dd></div><div><dt>ESP session total</dt><dd>${hasNumber(continuity.sessionTotal)?fmt(continuity.sessionTotal,3):'—'} L</dd></div><div><dt>Session pulses</dt><dd>${hasNumber(pulses)?fmt(pulses,0):'—'}</dd></div><div><dt>Calibration</dt><dd>${cal>0?fmt(cal,2):'—'} pulses/L</dd></div><div><dt>Continuity source</dt><dd>${continuity.anchor==='firebase'?'Firebase history':continuity.anchor==='cache'?'Last dashboard cache':'Current session'}</dd></div></dl><p class="formula">Continuous total = previous saved meter + new litres after reconnect/reboot<br>If the ESP session counter falls after a reboot, the lower value is treated as a new session and added — never used to replace the old total.${cal>0?`<br>Calibration example: ${fmt(cal,0)} pulses ÷ ${fmt(cal,0)} = 1 litre`:''}</p><p class="small">The dashboard keeps cumulative display/history continuous across counter restarts. The upcoming ESP32 firmware update should additionally save counters in NVS and buffer offline logs so this remains reliable even when the browser is closed.</p>`;
-}
-$('pipeGrid').addEventListener('click',e=>{const button=e.target.closest('[data-detail]');if(!button)return;detailPipe=Number(button.dataset.detail);renderDetail();$('detailDialog').showModal();});
-$('closeDetails').addEventListener('click',()=>$('detailDialog').close());$('analyzePipe').addEventListener('click',()=>{$('detailDialog').close();$('pipeFilter').value=String(detailPipe);selectedPipe=String(detailPipe);renderAnalysis();$('analysis').scrollIntoView({behavior:reduceMotion?'instant':'smooth'});});
-function applyFilters(){if(!$('dateFilter').value||!Number.isFinite(new Date(`${$('dateFilter').value}T00:00:00`).getTime())){toast('Choose a valid date.');return;}selectedDate=$('dateFilter').value;selectedPipe=$('pipeFilter').value;renderAnalysis();toast('Filters applied.');}
-$('filterForm').addEventListener('submit',e=>{e.preventDefault();applyFilters();});$('todayButton').addEventListener('click',()=>{$('dateFilter').value=localDay(Date.now());applyFilters();});
-for(const b of document.querySelectorAll('[data-period]'))b.addEventListener('click',()=>{period=b.dataset.period;for(const x of document.querySelectorAll('[data-period]'))x.setAttribute('aria-pressed',String(x===b));renderAnalysis();});
-for(const b of document.querySelectorAll('[data-export]'))b.addEventListener('click',exportCSV);
-$('refresh').addEventListener('click',async()=>{if(liveBusy||historyBusy){toast('Readings are already refreshing.');return;}$('refresh').disabled=true;await Promise.all([fetchLive(),fetchHistory()]);$('refresh').disabled=false;toast(liveReachable&&!historyFailure?'Readings refreshed.':'Refresh finished. Check connection messages.');});
-for(const link of document.querySelectorAll('.nav-item'))link.addEventListener('click',()=>{for(const a of document.querySelectorAll('.nav-item'))a.classList.toggle('active',a===link);});
-// Preserve the ESP reset-token / acknowledgement protocol. Never write resets automatically.
-function storePending(token){pendingReset=token;if(!token){testWipePending=false;try{localStorage.removeItem('dfab-water-test-wipe');}catch{}}try{if(token)localStorage.setItem('dfab-water-pending-reset',String(token));else localStorage.removeItem('dfab-water-pending-reset');}catch{}}
-function setResetKind(kind){try{if(kind)localStorage.setItem('dfab-water-reset-kind',kind);else localStorage.removeItem('dfab-water-reset-kind');}catch{}}
-function getResetKind(){try{return localStorage.getItem('dfab-water-reset-kind')||'';}catch{return '';}}
-try{pendingReset=Number(localStorage.getItem('dfab-water-pending-reset'))||null;}catch{}
-function resetButton(){const test=$('testWipe');test.hidden=!ENABLE_TEST_WIPE;test.disabled=resetBusy||!!pendingReset;test.innerHTML=icon('trash')+(resetBusy?'Wiping…':testWipePending?'Device reset pending':'Test wipe');const b=$('wipeLogs');b.disabled=resetBusy||!!pendingReset;b.innerHTML=icon('trash')+(resetBusy?'Waiting for device…':pendingReset?'Reset queued':'Wipe logs & totals');}
-$('wipeLogs').addEventListener('click',()=>$('resetDialog').showModal());$('cancelReset').addEventListener('click',()=>$('resetDialog').close());
-$('confirmReset').addEventListener('click',async()=>{
- if(resetBusy||pendingReset)return;$('resetDialog').close();resetBusy=true;resetSending=true;resetButton();const token=Date.now();
- // Keep the token before sending: if a response is lost, its outcome is uncertain.
- storePending(token);setResetKind('full-wipe');
- try{await request(RESET_TOKEN,{method:'PUT',headers:{'Content-Type':'application/json'},body:String(token)});resetSending=false;message('resetMessage','Reset requested. Waiting for the ESP32 to acknowledge; if offline, it will reset when it reconnects.');await checkReset();}
- catch(e){message('resetMessage',`The reset request could not be confirmed (${e.name==='AbortError'?'request timed out':e.message}). Checking whether it reached the device; no second reset will be sent.`);}
- finally{resetBusy=false;resetSending=false;resetButton();}
-});
-let ackBusy=false;
-async function checkReset(){if(!pendingReset||ackBusy||resetSending)return;ackBusy=true;const token=pendingReset;try{
- const ack=await request(`${RESET_ACK}?t=${Date.now()}`);
- if(number(ack)>=token){
-  const resetKind=getResetKind(),wasFullWipe=resetKind==='full-wipe';
-  if(wasFullWipe){
-   try{await request(HISTORY,{method:'DELETE'});history=[];historyLoaded=true;historyFailure='';clearMeterCache();}
-   catch(e){message('resetMessage',`ESP32 reset acknowledged, but Firebase history could not be cleared (${e.name==='AbortError'?'request timed out':e.message}). Totals were retained to prevent an accidental partial wipe.`);return;}
-  }
-  storePending(null);setResetKind('');resetButton();message('resetMessage',wasFullWipe?'Reset complete. Saved history and continuous totals were cleared.':'The ESP32 acknowledged the reset. Refreshing current records.');await Promise.all([fetchHistory(),fetchLive()]);toast(wasFullWipe?'Water logs and totals reset.':'Device reset acknowledged.');
- }else{const queued=await request(`${RESET_TOKEN}?t=${Date.now()}`);if(number(queued)<token){storePending(null);setResetKind('');resetButton();message('resetMessage','The reset request was not stored. Your readings have been retained. You can try again.');}else message('resetMessage',testWipePending?'Water data cleared. ESP32 counter reset pending; live readings will resume after acknowledgement.':'Reset queued. It will execute when the ESP32 reconnects and processes the command.');}
- }catch{message('resetMessage','Reset acknowledgement is unavailable. The request may still be queued; reconnect to check its status.');}finally{ackBusy=false;}}
-
-// TEMPORARY TEST WIPE — removes only this dashboard's /waterFlow node.
-function clearTestView(){
- dataGeneration++;history=[];historyLoaded=true;historyFailure='';liveReachable=false;
- latestLive={timestamp:0,online:false};for(const i of PIPE_NOS)latestLive[`pipe${i}`]={totalLitres:0,totalPulseCount:0,currentFlowLpm:0,flowing:false};
- message('liveError','');message('historyError','');renderLive();renderAnalysis();
-}
-try{testWipePending=!!pendingReset&&localStorage.getItem('dfab-water-test-wipe')===String(pendingReset);}catch{}
-if(testWipePending)clearTestView();
-$('testWipe').hidden=!ENABLE_TEST_WIPE;
-$('testWipe').addEventListener('click',()=>{if(ENABLE_TEST_WIPE&&!resetBusy&&!pendingReset)$('testWipeDialog').showModal();});
-$('cancelTestWipe').addEventListener('click',()=>$('testWipeDialog').close());
-async function runTestWipe(){
- if(!ENABLE_TEST_WIPE||resetBusy||pendingReset)return;
- $('testWipeDialog').close();resetBusy=true;resetSending=true;resetButton();
- const token=Date.now();storePending(token);setResetKind('test-wipe');
- // Ignore responses started before the wipe, including reads still in flight.
- testWipePending=true;dataGeneration++;
+function beep(){
+ if(!alertArmed||!audioContext)return;
  try{
-  await request(`${BASE}/waterFlow.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({control:{resetToken:token}})});
-  try{localStorage.setItem('dfab-water-test-wipe',String(token));}catch{}
-  clearMeterCache();clearTestView();message('resetMessage','All stored water readings and history cleared. Waiting for the ESP32 to reset its counters; keep it powered and connected.');
-  toast('Stored water data cleared. Device reset requested.');
- }catch(e){
-  testWipePending=false;
-  message('resetMessage',`Test wipe could not be confirmed (${e.name==='AbortError'?'request timed out':e.message}). The dashboard has not assumed success. Checking the reset request.`);
- }finally{resetBusy=false;resetSending=false;resetButton();}
- await checkReset();
+  const osc=audioContext.createOscillator(),gain=audioContext.createGain();
+  osc.frequency.value=780;gain.gain.value=.04;
+  osc.connect(gain);gain.connect(audioContext.destination);
+  osc.start();gain.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+.22);
+  osc.stop(audioContext.currentTime+.24);
+ }catch{}
 }
-$('confirmTestWipe').addEventListener('click',runTestWipe);
+function browserNotify(title,body,tag){
+ if(!alertArmed||!notificationSupported()||Notification.permission!=='granted')return;
+ try{new Notification(title,{body,tag});}catch{}
+}
+function updateAlertSystem(alerting){
+ const current=new Set(alerting);
+ const newAlerts=alerting.filter(i=>!activeAlertPipes.has(i));
+ if(newAlerts.length){
+  beep();setTimeout(beep,320);
+  for(const i of newAlerts){
+   const p=latestLive?.[`pipe${i}`],mins=Math.floor(nonneg(p?.continuousFlowSeconds)/60);
+   browserNotify(`DFAB Water Alert · Pipe ${i}`,`Pipe ${i} has been flowing continuously for ${mins} minutes at ${fmt(flowOf(p))} L/min.`,`dfab-flow-${i}`);
+  }
+ }
+ activeAlertPipes=current;
+}
+function checkDailyMilestone(litres){
+ if(litres<1000)return;
+ const step=Math.floor(litres/1000)*1000;
+ const key=`dfab-daily-milestone-${localDay()}`;
+ const previous=number(localStorage.getItem(key));
+ if(step>previous){
+  localStorage.setItem(key,String(step));
+  browserNotify('DFAB Daily Water Usage',`Today's total water usage has reached ${step.toLocaleString('en-IN')} litres.`,`dfab-daily-${localDay()}-${step}`);
+ }
+}
 
-renderLive();renderAnalysis();resetButton();fetchLive();fetchHistory();if(pendingReset)checkReset();
-setInterval(fetchLive,2000);setInterval(fetchHistory,5000);setInterval(renderLive,1000);setInterval(checkReset,5000);
-window.addEventListener('online',()=>{fetchLive();fetchHistory();});
-window.addEventListener('offline',()=>{liveReachable=false;renderLive();message('liveError','Your browser is offline. Live readings are paused; last recorded totals remain visible.');});
+/* ===== Analytics ===== */
+function showAnalyticsFields(){
+ const period=$('analyticsPeriod').value;
+ document.querySelectorAll('[data-filter-field]').forEach(el=>el.classList.toggle('visible',el.dataset.filterField===period));
+}
+showAnalyticsFields();
+
+let analyticsAutoTimer=null;
+function queueAnalyticsRefresh(){
+ clearTimeout(analyticsAutoTimer);
+ analyticsAutoTimer=setTimeout(()=>loadAnalytics(),220);
+}
+$('pipeFilter').addEventListener('change',queueAnalyticsRefresh);
+$('analyticsPeriod').addEventListener('change',()=>{
+ showAnalyticsFields();
+ queueAnalyticsRefresh();
+});
+$('dateFilter').addEventListener('change',queueAnalyticsRefresh);
+$('monthFilter').addEventListener('change',queueAnalyticsRefresh);
+$('yearFilter').addEventListener('change',queueAnalyticsRefresh);
+
+
+function normalizeHistory(raw){
+ if(!raw||typeof raw!=='object')return [];
+ return Object.entries(raw).map(([key,v])=>{
+  if(!v||typeof v!=='object')return null;
+  const pipes={};
+  for(const i of PIPE_NOS){
+   const intervalPulses=number(v[`pipe${i}IntervalPulses`]);
+   const totalPulses=number(v[`pipe${i}TotalPulseCount`]);
+   pipes[i]={
+    intervalLitres:hasNumber(v[`pipe${i}IntervalPulses`])?litresFromPulses(i,intervalPulses):nonneg(v[`pipe${i}IntervalLitres`]),
+    totalLitres:hasNumber(v[`pipe${i}TotalPulseCount`])?litresFromPulses(i,totalPulses):nonneg(v[`pipe${i}TotalLitres`]),
+    avgFlow:nonneg(v[`pipe${i}AverageFlowLpm`]),
+    peakFlow:nonneg(v[`pipe${i}PeakFlowLpm`]),
+    activeSeconds:nonneg(v[`pipe${i}ActiveSeconds`])
+   };
+  }
+  return {key,timestamp:number(v.timestamp),seconds:number(v.historyIntervalSeconds)||300,pipes};
+ }).filter(v=>v&&v.timestamp>0).sort((a,b)=>a.timestamp-b.timestamp);
+}
+function niceMax(v){
+ if(v<=0)return 10;
+ const p=10**Math.floor(Math.log10(v));
+ return Math.ceil(v/p/2)*2*p;
+}
+function drawChart(values,labels){
+ const width=720,height=245,left=58,right=14,top=18,bottom=40,plotW=width-left-right,plotH=height-top-bottom;
+ const max=niceMax(Math.max(0,...values));
+ let s='';
+ for(let k=0;k<=4;k++){
+  const y=top+plotH-k*plotH/4,val=max*k/4;
+  s+=`<line x1="${left}" x2="${width-right}" y1="${y}" y2="${y}" stroke="var(--chart-grid)" stroke-dasharray="3 5"/><text x="${left-9}" y="${y+4}" text-anchor="end">${val>=1000?`${fmt(val/1000,1)}k`:fmt(val,val<10?1:0)}</text>`;
+ }
+ const step=plotW/Math.max(1,values.length),barW=Math.max(4,Math.min(24,step*.62));
+ values.forEach((v,i)=>{
+  const x=left+i*step+(step-barW)/2,h=max?plotH*v/max:0,y=top+plotH-h;
+  if(v>0)s+=`<rect class="bar" x="${x}" y="${y}" width="${barW}" height="${h}" rx="3"><title>${esc(labels[i])}: ${fmt(v,3)} L</title></rect>`;
+  const every=values.length>40?6:values.length>20?4:values.length>12?2:1;
+  if(i%every===0||i===values.length-1)s+=`<text x="${left+i*step+step/2}" y="${height-12}" text-anchor="middle">${esc(labels[i])}</text>`;
+ });
+ $('usageChart').innerHTML=s;
+ $('chartEmpty').hidden=values.some(v=>v>0);
+}
+function renderComparison(usages,label){
+ const sum=usages.reduce((a,b)=>a+b,0);
+ $('compareSubtitle').textContent=`${label} · all pipes`;
+ $('comparison').innerHTML=PIPE_NOS.map((i,j)=>`<div><div class="compare-top"><span><i class="swatch" style="background:${COLORS[j]}"></i>Pipe ${i}</span><span>${fmt(usages[j],2)} L</span></div><div class="track"><div style="width:${sum?usages[j]/sum*100:0}%;background:${COLORS[j]}"></div></div></div>`).join('');
+}
+async function loadAnalytics(){
+ analyticsPeriod=$('analyticsPeriod').value;
+ selectedPipe=$('pipeFilter').value;
+ const nos=selectedNos();
+ message('historyError','');
+ $('filterInfo').textContent='Loading…';
+
+ try{
+  if(analyticsPeriod==='day'){
+   const date=$('dateFilter').value||localDay();
+   const [h,s]=await Promise.allSettled([request(`${historyDayUrl(date)}?t=${Date.now()}`),request(`${daySummaryUrl(date)}?t=${Date.now()}`)]);
+   const history=h.status==='fulfilled'?normalizeHistory(h.value):[];
+   const summary=s.status==='fulfilled'?s.value:null;
+   const values=Array(24).fill(0);
+   for(const r of history){
+    const hour=new Date(r.timestamp).getHours();
+    values[hour]+=nos.reduce((sum,i)=>sum+r.pipes[i].intervalLitres,0);
+   }
+   const usageByPipe=PIPE_NOS.map(i=>summary?summaryPipeUsage(summary,i):history.reduce((sum,r)=>sum+r.pipes[i].intervalLitres,0));
+   const total=summary?summaryUsage(summary,nos):history.reduce((sum,r)=>sum+nos.reduce((x,i)=>x+r.pipes[i].intervalLitres,0),0);
+   let weight=0,weighted=0,peak=0,active=0;
+   for(const r of history){
+    const avg=nos.reduce((x,i)=>x+r.pipes[i].avgFlow,0),pk=nos.reduce((x,i)=>x+r.pipes[i].peakFlow,0);
+    weight+=r.seconds;weighted+=avg*r.seconds;peak=Math.max(peak,pk);active+=Math.max(...nos.map(i=>r.pipes[i].activeSeconds));
+   }
+   const label=new Date(`${date}T00:00:00`).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+   drawChart(values,Array.from({length:24},(_,i)=>String(i).padStart(2,'0')));
+   renderComparison(usageByPipe,label);
+   $('chartTitle').textContent='Daily consumption';$('chartSubtitle').textContent=`${label} · litres by hour`;
+   $('chartTotalLabel').textContent='Total day usage';$('monthUsageValue').textContent=`${fmt(total,3)} L`;
+   $('stat1Label').textContent='Selected day usage';$('usage').textContent=`${fmt(total,3)} L`; $('stat1Note').textContent='Recorded volume';
+   $('stat2Label').textContent='Average flow';$('average').textContent=`${fmt(weight?weighted/weight:0)} L/min`; $('stat2Note').textContent='Weighted archive samples';
+   $('stat3Label').textContent='Peak flow';$('peak').textContent=`${fmt(peak)} L/min`; $('stat3Note').textContent='Highest recorded sample';
+   $('stat4Label').textContent='Active duration';$('duration').textContent=`${fmt(active/60,1)} min`; $('stat4Note').textContent='Observed active time';
+   $('filterInfo').textContent=`${selectedPipe==='all'?'All pipes':`Pipe ${selectedPipe}`} · ${label}`;
+  }else if(analyticsPeriod==='month'){
+   const month=$('monthFilter').value||localMonth(),p=monthParts(month);
+   const [days,monthSummary]=await Promise.allSettled([request(`${monthDailyUrl(month)}?t=${Date.now()}`),request(`${monthSummaryUrl(month)}?t=${Date.now()}`)]);
+   const dayObj=days.status==='fulfilled'&&days.value?days.value:{};
+   const summary=monthSummary.status==='fulfilled'?monthSummary.value:null;
+   const count=new Date(Number(p.y),Number(p.m),0).getDate();
+   const values=Array(count).fill(0);
+   for(let d=1;d<=count;d++){const ds=dayObj[String(d).padStart(2,'0')];values[d-1]=summaryUsage(ds,nos);}
+   const usageByPipe=PIPE_NOS.map(i=>summary?summaryPipeUsage(summary,i):Object.values(dayObj).reduce((s,x)=>s+summaryPipeUsage(x,i),0));
+   const total=summary?summaryUsage(summary,nos):values.reduce((a,b)=>a+b,0);
+   const recorded=values.filter(v=>v>0),avg=recorded.length?recorded.reduce((a,b)=>a+b,0)/recorded.length:0,peak=Math.max(0,...values);
+   const label=new Date(`${month}-01T00:00:00`).toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+   drawChart(values,Array.from({length:count},(_,i)=>String(i+1)));
+   renderComparison(usageByPipe,label);
+   $('chartTitle').textContent='Monthly consumption';$('chartSubtitle').textContent=`${label} · litres by day`;
+   $('chartTotalLabel').textContent='Total month usage';$('monthUsageValue').textContent=`${fmt(total,3)} L`;
+   $('stat1Label').textContent='Selected month usage';$('usage').textContent=`${fmt(total,3)} L`; $('stat1Note').textContent='Recorded volume';
+   $('stat2Label').textContent='Average per recorded day';$('average').textContent=`${fmt(avg,2)} L/day`; $('stat2Note').textContent='Recorded days only';
+   $('stat3Label').textContent='Peak day';$('peak').textContent=`${fmt(peak,2)} L`; $('stat3Note').textContent='Highest daily usage';
+   $('stat4Label').textContent='Recorded days';$('duration').textContent=`${recorded.length} days`; $('stat4Note').textContent='Days with usage';
+   $('filterInfo').textContent=`${selectedPipe==='all'?'All pipes':`Pipe ${selectedPipe}`} · ${label}`;
+  }else{
+   const year=$('yearFilter').value||String(currentYear());
+   const months=await request(`${yearMonthlyUrl(year)}?t=${Date.now()}`);
+   const obj=months&&typeof months==='object'?months:{};
+   const values=Array(12).fill(0);
+   for(let m=1;m<=12;m++){values[m-1]=summaryUsage(obj[String(m).padStart(2,'0')],nos);}
+   const usageByPipe=PIPE_NOS.map(i=>Object.values(obj).reduce((s,x)=>s+summaryPipeUsage(x,i),0));
+   const total=values.reduce((a,b)=>a+b,0),recorded=values.filter(v=>v>0),avg=recorded.length?total/recorded.length:0,peak=Math.max(0,...values);
+   drawChart(values,['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']);
+   renderComparison(usageByPipe,year);
+   $('chartTitle').textContent='Yearly consumption';$('chartSubtitle').textContent=`${year} · litres by month`;
+   $('chartTotalLabel').textContent='Total year usage';$('monthUsageValue').textContent=`${fmt(total,3)} L`;
+   $('stat1Label').textContent='Selected year usage';$('usage').textContent=`${fmt(total,3)} L`; $('stat1Note').textContent='Archived volume';
+   $('stat2Label').textContent='Average per recorded month';$('average').textContent=`${fmt(avg,2)} L/month`; $('stat2Note').textContent='Recorded months only';
+   $('stat3Label').textContent='Peak month';$('peak').textContent=`${fmt(peak,2)} L`; $('stat3Note').textContent='Highest monthly usage';
+   $('stat4Label').textContent='Recorded months';$('duration').textContent=`${recorded.length} months`; $('stat4Note').textContent='Months with usage';
+   $('filterInfo').textContent=`${selectedPipe==='all'?'All pipes':`Pipe ${selectedPipe}`} · ${year}`;
+  }
+ }catch(e){
+  message('historyError',`Analytics unavailable (${e.name==='AbortError'?'request timed out':e.message}). Live monitoring continues normally.`);
+  $('filterInfo').textContent='Archive temporarily unavailable';
+ }
+}
+$('filterForm').addEventListener('submit',e=>{e.preventDefault();queueAnalyticsRefresh();});
+$('todayButton').addEventListener('click',()=>{
+ $('dateFilter').value=localDay();
+ $('monthFilter').value=localMonth();
+ $('yearFilter').value=String(currentYear());
+ const p=$('analyticsPeriod').value;
+ if(p==='day')$('dateFilter').value=localDay();
+ if(p==='month')$('monthFilter').value=localMonth();
+ if(p==='year')$('yearFilter').value=String(currentYear());
+ queueAnalyticsRefresh();
+});
+
+/* ===== Usage Records / exact CSV ===== */
+function updateRecordFields(){
+ recordMode=$('recordsRange').value;
+ document.querySelectorAll('[data-record-field]').forEach(el=>{
+  const t=el.dataset.recordField;
+  const visible=(recordMode==='today'&&t==='time')||(recordMode==='day'&&t==='day')||(recordMode==='month'&&t==='month')||(recordMode==='year'&&t==='year');
+  el.classList.toggle('visible',visible);
+ });
+}
+updateRecordFields();
+
+let recordsAutoTimer=null;
+function queueRecordsRefresh(){
+ clearTimeout(recordsAutoTimer);
+ recordsAutoTimer=setTimeout(()=>loadRecords(),240);
+}
+$('recordsRange').addEventListener('change',()=>{
+ updateRecordFields();
+ queueRecordsRefresh();
+});
+$('recordsPipe').addEventListener('change',queueRecordsRefresh);
+$('recordsDate').addEventListener('change',queueRecordsRefresh);
+$('recordsMonth').addEventListener('change',queueRecordsRefresh);
+$('recordsYear').addEventListener('change',queueRecordsRefresh);
+$('recordsStartTime').addEventListener('change',queueRecordsRefresh);
+$('recordsEndTime').addEventListener('change',queueRecordsRefresh);
+
+
+
+function formatTimeOnly(ts){
+ return new Date(ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+}
+function intervalMeta(record,index){
+ const end=record.timestamp;
+ const start=end-(Math.max(1,record.seconds||300)*1000);
+ return {
+   id:index+1,
+   start,
+   end,
+   label:`Interval ${String(index+1).padStart(2,'0')} · ${formatTimeOnly(start)}–${formatTimeOnly(end)}`
+ };
+}
+
+function recordNos(){return $('recordsPipe').value==='all'?PIPE_NOS:[Number($('recordsPipe').value)];}
+function timeMinutes(v){const [h,m]=v.split(':').map(Number);return h*60+m;}
+async function loadRecords(){
+ recordMode=$('recordsRange').value;
+ const nos=recordNos();
+ $('recordSummary').textContent='Loading selected records…';
+ recordsRows=[];
+
+ try{
+  if(recordMode==='today'){
+   const date=localDay();
+   const raw=await request(`${historyDayUrl(date)}?t=${Date.now()}`);
+   const history=normalizeHistory(raw);
+   const start=timeMinutes($('recordsStartTime').value);
+   const end=timeMinutes($('recordsEndTime').value);
+
+   let visibleIntervalIndex=0;
+   for(const r of history){
+    const d=new Date(r.timestamp);
+    const mins=d.getHours()*60+d.getMinutes();
+    if(mins<start||mins>end)continue;
+
+    const meta=intervalMeta(r,visibleIntervalIndex++);
+    for(const i of nos){
+     recordsRows.push({
+      period:d.toLocaleString('en-GB'),
+      pipe:`Pipe ${i}`,
+      usage:r.pipes[i].intervalLitres,
+      avgFlow:r.pipes[i].avgFlow,
+      peakFlow:r.pipes[i].peakFlow,
+      active:r.pipes[i].activeSeconds/60,
+      source:'archive',
+      intervalId:meta.id,
+      intervalLabel:meta.label
+     });
+    }
+   }
+
+   if(recordsRows.length){
+     renderRecordTable('interval');
+     $('recordSummary').textContent=`${recordsRows.length.toLocaleString()} archived interval rows`;
+   }else{
+     for(const i of nos){
+      recordsRows.push({
+       period:`${date} · current total`,
+       pipe:`Pipe ${i}`,
+       usage:currentTodayPipeUsage(i),
+       source:'current'
+      });
+     }
+     renderRecordTable('summary');
+     $('recordSummary').textContent='Current daily totals · detailed intervals appear automatically';
+   }
+
+   $('recordsScope').textContent=`${date} · ${$('recordsStartTime').value}–${$('recordsEndTime').value} · ${$('recordsPipe').value==='all'?'all pipes':`Pipe ${$('recordsPipe').value}`}`;
+
+  }else if(recordMode==='day'){
+   const date=$('recordsDate').value||localDay();
+
+   const [historyResult,summaryResult]=await Promise.allSettled([
+    request(`${historyDayUrl(date)}?t=${Date.now()}`),
+    request(`${daySummaryUrl(date)}?t=${Date.now()}`)
+   ]);
+
+   const history=historyResult.status==='fulfilled'?normalizeHistory(historyResult.value):[];
+   const summary=summaryResult.status==='fulfilled'?summaryResult.value:null;
+
+   if(history.length){
+    history.forEach((r,idx)=>{
+     const d=new Date(r.timestamp);
+     const meta=intervalMeta(r,idx);
+     for(const i of nos){
+      recordsRows.push({
+       period:d.toLocaleString('en-GB'),
+       pipe:`Pipe ${i}`,
+       usage:r.pipes[i].intervalLitres,
+       avgFlow:r.pipes[i].avgFlow,
+       peakFlow:r.pipes[i].peakFlow,
+       active:r.pipes[i].activeSeconds/60,
+       source:'archive',
+       intervalId:meta.id,
+       intervalLabel:meta.label
+      });
+     }
+    });
+    renderRecordTable('interval');
+    $('recordSummary').textContent=`${recordsRows.length.toLocaleString()} archived interval rows`;
+   }else if(summary){
+    for(const i of nos){
+     recordsRows.push({
+      period:date,
+      pipe:`Pipe ${i}`,
+      usage:summaryPipeUsage(summary,i),
+      source:'summary'
+     });
+    }
+    renderRecordTable('summary');
+    $('recordSummary').textContent='Daily summary';
+   }else if(date===localDay()){
+    for(const i of nos){
+     recordsRows.push({
+      period:`${date} · current total`,
+      pipe:`Pipe ${i}`,
+      usage:currentTodayPipeUsage(i),
+      source:'current'
+     });
+    }
+    renderRecordTable('summary');
+    $('recordSummary').textContent='Current daily totals';
+   }else{
+    renderRecordTable('summary');
+    $('recordSummary').textContent='No records stored for this date';
+   }
+
+   $('recordsScope').textContent=`${date} · ${$('recordsPipe').value==='all'?'all pipes':`Pipe ${$('recordsPipe').value}`}`;
+
+  }else if(recordMode==='month'){
+   const month=$('recordsMonth').value||localMonth();
+   const raw=await request(`${monthDailyUrl(month)}?t=${Date.now()}`);
+   const obj=raw&&typeof raw==='object'?raw:{};
+
+   for(const day of Object.keys(obj).sort()){
+    for(const i of nos){
+     recordsRows.push({
+      period:`${month}-${day}`,
+      pipe:`Pipe ${i}`,
+      usage:summaryPipeUsage(obj[day],i),
+      source:'summary'
+     });
+    }
+   }
+
+   if(month===localMonth()){
+    const today=localDay();
+    const todayKey=today.slice(-2);
+    if(!Object.prototype.hasOwnProperty.call(obj,todayKey)){
+     for(const i of nos){
+      recordsRows.push({
+       period:today,
+       pipe:`Pipe ${i}`,
+       usage:currentTodayPipeUsage(i),
+       source:'current'
+      });
+     }
+    }
+   }
+
+   recordsRows.sort((a,b)=>a.period.localeCompare(b.period)||a.pipe.localeCompare(b.pipe));
+   renderRecordTable('summary');
+   $('recordSummary').textContent=recordsRows.length?`${recordsRows.length.toLocaleString()} day/pipe rows`:'No records stored for this month';
+   $('recordsScope').textContent=`${month} · day-by-day · ${$('recordsPipe').value==='all'?'all pipes':`Pipe ${$('recordsPipe').value}`}`;
+
+  }else{
+   const year=$('recordsYear').value||String(currentYear());
+   const raw=await request(`${yearMonthlyUrl(year)}?t=${Date.now()}`);
+   const obj=raw&&typeof raw==='object'?raw:{};
+
+   for(const month of Object.keys(obj).sort()){
+    for(const i of nos){
+     recordsRows.push({
+      period:`${year}-${month}`,
+      pipe:`Pipe ${i}`,
+      usage:summaryPipeUsage(obj[month],i),
+      source:'summary'
+     });
+    }
+   }
+
+   if(year===String(currentYear())){
+    const currentMonthKey=localMonth().slice(-2);
+    if(!Object.prototype.hasOwnProperty.call(obj,currentMonthKey)){
+     for(const i of nos){
+      const p=latestLive?.[`pipe${i}`];
+      let usage=0;
+      if(hasNumber(p?.monthPulseCount))usage=litresFromPulses(i,p.monthPulseCount);
+      else if(hasNumber(p?.monthLitres))usage=nonneg(p.monthLitres);
+
+      recordsRows.push({
+       period:localMonth(),
+       pipe:`Pipe ${i}`,
+       usage,
+       source:'current'
+      });
+     }
+    }
+   }
+
+   recordsRows.sort((a,b)=>a.period.localeCompare(b.period)||a.pipe.localeCompare(b.pipe));
+   renderRecordTable('summary');
+   $('recordSummary').textContent=recordsRows.length?`${recordsRows.length.toLocaleString()} month/pipe rows`:'No records stored for this year';
+   $('recordsScope').textContent=`${year} · month-by-month · ${$('recordsPipe').value==='all'?'all pipes':`Pipe ${$('recordsPipe').value}`}`;
+  }
+
+  const total=recordsRows.reduce((s,r)=>s+nonneg(r.usage),0);
+  $('recordsTotal').textContent=`${fmt(total,3)} L`;
+
+ }catch(e){
+  if(recordMode==='today'){
+   for(const i of nos){
+    recordsRows.push({
+     period:`${localDay()} · current total`,
+     pipe:`Pipe ${i}`,
+     usage:currentTodayPipeUsage(i),
+     source:'current'
+    });
+   }
+   renderRecordTable('summary');
+   $('recordsTotal').textContent=`${fmt(recordsRows.reduce((s,r)=>s+nonneg(r.usage),0),3)} L`;
+   $('recordSummary').textContent='Current daily totals · detailed archive temporarily unavailable';
+   $('recordsScope').textContent=`${localDay()} · ${$('recordsPipe').value==='all'?'all pipes':`Pipe ${$('recordsPipe').value}`}`;
+  }else{
+   $('recordHead').innerHTML='';
+   $('recordBody').innerHTML=`<tr><td class="table-empty">Records unavailable: ${esc(e.message)}</td></tr>`;
+   $('recordSummary').textContent='Could not load selected records';
+   $('recordsTotal').textContent='0.000 L';
+  }
+ }
+}
+function renderRecordTable(type){
+ if(type==='interval'){
+  $('recordHead').innerHTML='<tr><th>Recorded at</th><th>Pipe</th><th>Usage · L</th><th>Average flow</th><th>Peak flow</th><th>Active</th></tr>';
+
+  if(!recordsRows.length){
+   $('recordBody').innerHTML='<tr><td colspan="6" class="table-empty">No records in this selection.</td></tr>';
+   return;
+  }
+
+  let htmlRows='';
+  let lastInterval=null;
+
+  for(const r of recordsRows){
+   if(r.intervalId!==lastInterval){
+    if(lastInterval!==null){
+     htmlRows+='<tr class="interval-gap" aria-hidden="true"><td colspan="6"></td></tr>';
+    }
+
+    htmlRows+=`<tr class="interval-heading">
+      <td colspan="6">
+        <span class="interval-badge">${esc(r.intervalLabel||`Interval ${r.intervalId}`)}</span>
+      </td>
+    </tr>`;
+
+    lastInterval=r.intervalId;
+   }
+
+   htmlRows+=`<tr class="interval-data-row">
+      <td>${esc(r.period)}</td>
+      <td><strong>${esc(r.pipe)}</strong></td>
+      <td>${fmt(r.usage,4)}</td>
+      <td>${fmt(r.avgFlow)} L/min</td>
+      <td>${fmt(r.peakFlow)} L/min</td>
+      <td>${fmt(r.active,1)} min</td>
+    </tr>`;
+  }
+
+  $('recordBody').innerHTML=htmlRows;
+ }else{
+  $('recordHead').innerHTML='<tr><th>Period</th><th>Pipe</th><th>Recorded usage · L</th></tr>';
+  $('recordBody').innerHTML=recordsRows.length
+    ? recordsRows.map(r=>`<tr><td>${esc(r.period)}</td><td>${esc(r.pipe)}</td><td>${fmt(r.usage,4)}</td></tr>`).join('')
+    : '<tr><td colspan="3" class="table-empty">No records in this selection.</td></tr>';
+ }
+}
+
+function exportRecords(){
+ if(!recordsRows.length){
+  toast('No records available for this selection.');
+  return;
+ }
+
+ const interval='avgFlow' in recordsRows[0];
+ const rows=[];
+
+ rows.push(['DFAB WATER USAGE RECORDS']);
+ rows.push(['Selection',$('recordsScope').textContent]);
+ rows.push([]);
+
+ if(interval){
+  let lastInterval=null;
+
+  for(const r of recordsRows){
+   if(r.intervalId!==lastInterval){
+    if(lastInterval!==null){
+     rows.push([]);
+    }
+
+    rows.push([r.intervalLabel||`Interval ${r.intervalId}`]);
+    rows.push([
+      'Recorded at',
+      'Pipe',
+      'Usage (L)',
+      'Average flow (L/min)',
+      'Peak flow (L/min)',
+      'Active minutes'
+    ]);
+
+    lastInterval=r.intervalId;
+   }
+
+   rows.push([
+     r.period,
+     r.pipe,
+     r.usage,
+     r.avgFlow,
+     r.peakFlow,
+     r.active
+   ]);
+  }
+ }else{
+  rows.push(['Period','Pipe','Usage (L)']);
+
+  for(const r of recordsRows){
+   rows.push([r.period,r.pipe,r.usage]);
+  }
+ }
+
+ const csv='\uFEFF'+rows
+   .map(row=>row.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(','))
+   .join('\r\n');
+
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');
+
+ a.href=url;
+ a.download=`DFAB-water-${recordMode}-${new Date().toISOString().slice(0,10)}.csv`;
+
+ document.body.appendChild(a);
+ a.click();
+ a.remove();
+
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+
+ toast(`Exported ${recordsRows.length.toLocaleString()} selected data rows.`);
+}
+
+$('downloadRecords').addEventListener('click',exportRecords);
+
+
+
+function refreshCurrentRecordsIfNeeded(){
+ const mode=$('recordsRange')?.value;
+ if(mode==='today' || (mode==='day' && $('recordsDate')?.value===localDay())){
+   loadRecords();
+ }
+}
+
+/* ===== Detail popup ===== */
+let detailPipe=1;
+function renderDetail(){
+ const i=detailPipe,p=latestLive?.[`pipe${i}`],available=pipeAvailable(p),fresh=isFresh()&&available;
+ const cal=calibrationForPipe(i),life=lifetimeForPipe(i);
+ const today=hasNumber(p?.todayPulseCount)?litresFromPulses(i,p.todayPulseCount):nonneg(p?.todayLitres);
+ const month=hasNumber(p?.monthPulseCount)?litresFromPulses(i,p.monthPulseCount):nonneg(p?.monthLitres);
+ $('detailTitle').textContent=`Pipe ${i} details`;
+ $('detailBody').innerHTML=`<p>${fresh?'Live device reading':available?'Last recorded reading':'Waiting for first reading'}</p><dl class="details"><div><dt>Current flow</dt><dd>${available?fmt(flowOf(p)):'0.00'} L/min</dd></div><div><dt>Lifetime usage</dt><dd>${hasNumber(life)?fmt(life,3):'0.000'} L</dd></div><div><dt>Today usage</dt><dd>${fmt(today,3)} L</dd></div><div><dt>This month</dt><dd>${fmt(month,3)} L</dd></div><div><dt>Total pulses</dt><dd>${hasNumber(p?.totalPulseCount)?fmt(p.totalPulseCount,0):'0'}</dd></div><div><dt>Calibration</dt><dd>${fmt(cal,2)} pulses/L</dd></div><div><dt>Continuous flow</dt><dd>${fmt(nonneg(p?.continuousFlowSeconds)/60,1)} min</dd></div><div><dt>Status</dt><dd>${fresh?(pipeFlowing(p)?'Flowing':'No flow'):available?'Last reading':'Waiting'}</dd></div></dl><p class="formula">Litres = raw pulses ÷ calibration. Raw pulse totals remain the canonical stored measurement.</p>`;
+}
+$('pipeGrid').addEventListener('click',e=>{const b=e.target.closest('[data-detail]');if(!b)return;detailPipe=Number(b.dataset.detail);renderDetail();$('detailDialog').showModal();});
+$('closeDetails').addEventListener('click',()=>$('detailDialog').close());
+$('analyzePipe').addEventListener('click',()=>{$('detailDialog').close();$('pipeFilter').value=String(detailPipe);selectedPipe=String(detailPipe);loadAnalytics();$('analysis').scrollIntoView({behavior:'smooth'});});
+
+/* ===== Refresh / bootstrap ===== */
+$('refresh').addEventListener('click',async()=>{
+ $('refresh').disabled=true;
+ await Promise.allSettled([fetchConfig(),fetchLive(),fetchCurrentSummaries(),loadAnalytics()]);
+ $('refresh').disabled=false;
+ toast('Dashboard refreshed.');
+});
+document.querySelectorAll('.nav-item').forEach(link=>link.addEventListener('click',()=>document.querySelectorAll('.nav-item').forEach(a=>a.classList.toggle('active',a===link))));
+
+async function bootstrap(){
+ await fetchConfig();
+ await Promise.allSettled([fetchLive(),fetchCurrentSummaries()]);
+ showAnalyticsFields();
+ await loadAnalytics();
+ await loadRecords();
+}
+bootstrap();
+
+setInterval(fetchLive,2000);
+setInterval(fetchCurrentSummaries,60000);
+setInterval(fetchConfig,30000);
+setInterval(refreshCurrentRecordsIfNeeded,15000);
+setInterval(renderLive,1000);
+window.addEventListener('online',()=>Promise.allSettled([fetchLive(),fetchCurrentSummaries(),fetchConfig()]));
+window.addEventListener('offline',()=>{liveReachable=false;renderLive();message('liveError','Browser is offline. Last loaded values remain visible.');});
+window.addEventListener('unhandledrejection',e=>console.error('Dashboard async error',e.reason));
 </script>
 </body>
 </html>
