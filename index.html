@@ -602,7 +602,7 @@
       <tbody id="recordBody"><tr><td class="table-empty">Loading usage records…</td></tr></tbody>
     </table>
   </div>
-  <div class="table-note" id="historyNote">Detailed records are grouped by interval for easier review and export. Current totals appear immediately while archived intervals build automatically.</div>
+  <div class="table-note" id="historyNote">Latest interval appears first. Older intervals continue downward for quick current-status review and export.</div>
 </section>
 <section id="settings" class="settings-section compact-settings" aria-labelledby="settingsHeading">
   <div class="section-heading">
@@ -1406,14 +1406,14 @@ $('recordsEndTime').addEventListener('change',queueRecordsRefresh);
 function formatTimeOnly(ts){
  return new Date(ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
 }
-function intervalMeta(record,index){
+function intervalMeta(record,actualNumber){
  const end=record.timestamp;
  const start=end-(Math.max(1,record.seconds||300)*1000);
  return {
-   id:index+1,
+   id:actualNumber,
    start,
    end,
-   label:`Interval ${String(index+1).padStart(2,'0')} · ${formatTimeOnly(start)}–${formatTimeOnly(end)}`
+   label:`Interval ${String(actualNumber).padStart(2,'0')} · ${formatTimeOnly(start)}–${formatTimeOnly(end)}`
  };
 }
 
@@ -1433,13 +1433,18 @@ async function loadRecords(){
    const start=timeMinutes($('recordsStartTime').value);
    const end=timeMinutes($('recordsEndTime').value);
 
-   let visibleIntervalIndex=0;
-   for(const r of history){
+   const visibleHistory=history.filter(r=>{
     const d=new Date(r.timestamp);
     const mins=d.getHours()*60+d.getMinutes();
-    if(mins<start||mins>end)continue;
+    return mins>=start&&mins<=end;
+   });
 
-    const meta=intervalMeta(r,visibleIntervalIndex++);
+   const totalVisibleIntervals=visibleHistory.length;
+
+   [...visibleHistory].reverse().forEach((r,reverseIndex)=>{
+    const d=new Date(r.timestamp);
+    const actualIntervalNumber=totalVisibleIntervals-reverseIndex;
+    const meta=intervalMeta(r,actualIntervalNumber);
     for(const i of nos){
      recordsRows.push({
       period:d.toLocaleString('en-GB'),
@@ -1453,7 +1458,7 @@ async function loadRecords(){
       intervalLabel:meta.label
      });
     }
-   }
+   });
 
    if(recordsRows.length){
      renderRecordTable('interval');
@@ -1485,9 +1490,11 @@ async function loadRecords(){
    const summary=summaryResult.status==='fulfilled'?summaryResult.value:null;
 
    if(history.length){
-    history.forEach((r,idx)=>{
+    const totalDayIntervals=history.length;
+    [...history].reverse().forEach((r,reverseIndex)=>{
      const d=new Date(r.timestamp);
-     const meta=intervalMeta(r,idx);
+     const actualIntervalNumber=totalDayIntervals-reverseIndex;
+     const meta=intervalMeta(r,actualIntervalNumber);
      for(const i of nos){
       recordsRows.push({
        period:d.toLocaleString('en-GB'),
